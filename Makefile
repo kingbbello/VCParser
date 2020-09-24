@@ -3,19 +3,39 @@ CC = gcc
 CFLAGS = -Wall -std=c11 -g
 LDFLAGS= -L.
 
-all: VCParser
+INC = include/
+SRC = src/
+BIN = bin/
+PARSER_SRC_FILES = $(wildcard src/VC*.c)
+PARSER_OBJ_FILES = $(patsubst src/VC%.c,bin/VC%.o,$(PARSER_SRC_FILES))
 
-VCParser: VCParser.o 
-	$(CC) $(CFLAGS) $(LDFLAGS) -o VCParser VCParser.o  
+parser: $(BIN)libvcparser.so
 
-VCParser.o: VCParser.c VCParser.h 
-	$(CC) $(CFLAGS) -c VCParser.c 
+$(BIN)libvcparser.so: $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
+	gcc -shared -o $(BIN)libvcparser.so $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o -lm
 
-liblist.so: LinkedListAPI.o
-	$(CC) -shared -o liblist.so LinkedListAPI.o
+#Compiles all files named VC*.c in src/ into object files, places all coresponding VC*.o files in bin/
+$(BIN)VC%.o: $(SRC)VC%.c $(INC)LinkedListAPI.h $(INC)VC*.h
+	gcc $(CFLAGS) -I$(INC) -c -fpic $< -o $@
+	
+$(BIN)StructListDemo: $(BIN)StructListDemo.o $(BIN)liblist.so
+ifeq ($(UNAME), Linux)
+	$(CC) $(CFLAGS) $(LDFLAGS) -L$(BIN) -o $(BIN)StructListDemo $(BIN)StructListDemo.o  -llist
+endif
+ifeq ($(UNAME), Darwin)
+	$(CC) $(CFLAGS) $(LDFLAGS) -L$(BIN) -o $(BIN)StructListDemo $(BIN)StructListDemo.o  -llist; \
+	install_name_tool -change $(BIN)liblist.so liblist.so $(BIN)StructListDemo; \
+	install_name_tool -id liblist.so $(BIN)liblist.so
+endif
+	
+$(BIN)StructListDemo.o: $(SRC)StructListDemo.c
+	$(CC) $(CFLAGS) -I$(INC) -c $(SRC)StructListDemo.c -o $(BIN)StructListDemo.o
+	
+$(BIN)liblist.so: $(BIN)LinkedListAPI.o
+	$(CC) -shared -o $(BIN)liblist.so $(BIN)LinkedListAPI.o
 
-LinkedListAPI.o: LinkedListAPI.c LinkedListAPI.h
-	$(CC) $(CFLAGS) -c -fpic LinkedListAPI.c
+$(BIN)LinkedListAPI.o: $(SRC)LinkedListAPI.c $(INC)LinkedListAPI.h
+	$(CC) $(CFLAGS) -c -fpic -I$(INC) $(SRC)LinkedListAPI.c -o $(BIN)LinkedListAPI.o
 
 clean:
-	rm -rf VCParser *.o *.so
+	rm -rf $(BIN)StructListDemo $(BIN)xmlExample $(BIN)*.o $(BIN)*.so
