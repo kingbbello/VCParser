@@ -188,6 +188,10 @@ void processProp(Card *thecard, char *contentLine)
     printf("3 -> %s \n", part3);
     printf("4 -> %s \n\n", part4);
 
+    // thecard->anniversary = malloc(sizeof(DateTime));
+    // thecard->birthday = malloc(sizeof(DateTime));
+    // thecard->fn = malloc(sizeof(Property));
+    // thecard->optionalProperties = initializeList(&propertyToString, &deleteProperty, &compareProperties);
     free(part);
     free(part2);
     free(part3);
@@ -233,6 +237,7 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
         }
     }
 
+    // deleteCard(theCard);
     free(theCard);
     free(newCardObject);
     free(text);
