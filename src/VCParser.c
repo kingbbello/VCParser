@@ -229,7 +229,6 @@ void processProp(Card *thecard, char *contentLine)
         }
 
         //Getting all values from contentline
-
         int start = 0;
 
         for (int i = 0; i < strlen(part4); i++)
@@ -243,7 +242,7 @@ void processProp(Card *thecard, char *contentLine)
                     char *string = malloc(2);
                     strcpy(string, "");
                     insertBack(prop->values, string);
-                    printf("empty value \n");
+                    // printf("empty value \n");
                 }
                 else
                 {
@@ -254,23 +253,26 @@ void processProp(Card *thecard, char *contentLine)
                     char *string = malloc(strlen(value) + 1);
                     strcpy(string, value);
                     insertBack(prop->values, string);
-                    printf("%s \n", value);
+                    // printf("%s \n", value);
                 }
 
                 start = i + 1;
                 free(value);
             }
         }
-        printf("\n");
+        // printf("\n");
         free(part4);
         free(part3);
 
-        if(strcmp(prop->name, "FN") == 0){
+        if (strcmp(prop->name, "FN") == 0)
+        {
             thecard->fn = prop;
-        }else{
+        }
+        else
+        {
             insertBack(thecard->optionalProperties, prop);
         }
-        deleteProperty(prop);
+        // deleteProperty(prop);
     }
     else
     {
@@ -321,9 +323,10 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
         }
     }
 
-    // deleteCard(theCard);
-    free(theCard);
+    deleteCard(theCard);
+
     // freeList(theCard->optionalProperties);
+    // free(theCard);
     free(newCardObject);
     free(text);
     return OK;
@@ -340,8 +343,8 @@ void deleteCard(Card *obj)
 
     temp = (Card *)obj;
     deleteProperty(temp->fn);
-    deleteDate(temp->birthday);
-    deleteDate(temp->anniversary);
+    // deleteDate(temp->birthday);
+    // deleteDate(temp->anniversary);
     freeList(temp->optionalProperties);
     free(temp);
 }
@@ -355,7 +358,9 @@ char *cardToString(const Card *obj)
 char *errorToString(VCardErrorCode err)
 {
     char *ERRORSTRING[] = {"OK", "INV_FILE", "INV_CARD", "INV_PROP", "INV_DT", "WRITE_ERROR", "OTHER_ERROR"};
-    return ERRORSTRING[err];
+    char *ret = malloc(strlen(ERRORSTRING[err]) + 1);
+    strcpy(ret, ERRORSTRING[err]);
+    return ret;
 }
 
 // *************************************************************************
@@ -463,6 +468,7 @@ char *dateToString(void *date)
 int main()
 {
     Card **theCard = NULL;
+    // printf("%s",errorToString(INV_CARD));
     createCard("testCard.vcf", theCard);
     // char *text = malloc(sizeof("VERSION:4.0"));
     // processProp(*theCard, "VERSION:4.0");
