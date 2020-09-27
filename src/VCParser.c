@@ -105,10 +105,6 @@ int count(char *text, char *toFind)
     return count;
 }
 
-void processGroup(Property *theProp, char *subString)
-{
-}
-
 void processValue(Property *theProp, char *subString)
 {
     // char *token = strtok(subString, "=");
@@ -121,17 +117,43 @@ void processValue(Property *theProp, char *subString)
     //     }
 }
 
-void processParam(Property *theProp, char *subString)
+bool checkDate(char *string)
 {
+    if (string[strlen(string) - 1] == 'z' || string[strlen(string) - 1] == 'Z')
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
+
+bool checkText(Property *prop)
+{
+    List *params = prop->parameters;
+    Node *paramNode = params->head;
+    for (int i = 0; i < params->length; i++)
+    {
+        Parameter *param = paramNode->data;
+        if (strcmp(param->name, "VALUE") == 0 && strcmp(param->value, "text") == 0)
+        {
+            return true;
+        }
+        paramNode = paramNode->next;
+    }
+    return false;
+}
+
 //Takes a line from VCF and puts puts the appropriate date-time or Property into the Card
 void processProp(Card *thecard, char *contentLine)
 {
-    char *part;
-    char *part2;
-    char *part3;
-    char *part4;
+    char *part;  // for holding groups
+    char *part2; // for holding names
+    char *part3; // for holding parameters
+    char *part4; // for holding values
 
+    //Splitting into values
     if (strchr(contentLine, ':') != NULL)
     {
         for (int i = 0; i < strlen(contentLine); i++)
@@ -145,6 +167,7 @@ void processProp(Card *thecard, char *contentLine)
         }
     }
 
+    //Splitting into parameters
     if (strchr(part2, ';') != NULL)
     {
         for (int i = 0; i < strlen(part2); i++)
@@ -167,6 +190,7 @@ void processProp(Card *thecard, char *contentLine)
         strcpy(part3, "");
     }
 
+    //splitting into groups
     if (strchr(part2, '.') != NULL)
     {
         for (int i = 0; i < strlen(part2); i++)
@@ -194,76 +218,76 @@ void processProp(Card *thecard, char *contentLine)
     // printf("3 -> %s \n", part3);
     // printf("4 -> %s \n\n", part4);
 
-    //Wokring on Properties
-    if (strcmp(part2, "anniversary") != 0 && strcmp(part2, "birthday") != 0)
+    //Working on Properties
+    Property *prop = malloc(sizeof(Property));
+    prop->group = part;
+    prop->name = part2;
+    prop->values = initializeList(&valueToString, &deleteValue, &compareValues);
+    prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
+
+    //Get the parameters for all contentline
+    char *end_str;
+    char *token = strtok_r(part3, ";", &end_str);
+    while (token != NULL)
     {
-        Property *prop = malloc(sizeof(Property));
-        prop->group = part;
-        prop->name = part2;
-        prop->values = initializeList(&valueToString, &deleteValue, &compareValues);
-        prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
-
-        //Get the parameters for all contentline
-        char *end_str;
-        char *token = strtok_r(part3, ";", &end_str);
-        while (token != NULL)
+        Parameter *param = malloc(sizeof(Parameter));
+        char *end_token;
+        char *token2 = strtok_r(token, "=", &end_token);
+        while (token2 != NULL)
         {
-            Parameter *param = malloc(sizeof(Parameter));
-            char *end_token;
-            char *token2 = strtok_r(token, "=", &end_token);
-            while (token2 != NULL)
-            {
-                param->name = malloc(strlen(token2) + 1);
-                strcpy(param->name, token2);
-                // printf("name = %s\n", param->name);
+            param->name = malloc(strlen(token2) + 1);
+            strcpy(param->name, token2);
+            // printf("name = %s\n", param->name);
 
-                token2 = strtok_r(NULL, "=", &end_token);
-                param->value = malloc(strlen(token2) + 1);
-                strcpy(param->value, token2);
-                // printf("value = %s\n", param->value);
-                insertBack(prop->parameters, param);
-                break;
-            }
-
-            token = strtok_r(NULL, ";", &end_str);
+            token2 = strtok_r(NULL, "=", &end_token);
+            param->value = malloc(strlen(token2) + 1);
+            strcpy(param->value, token2);
+            // printf("value = %s\n", param->value);
+            insertBack(prop->parameters, param);
+            break;
         }
 
-        //Getting all values from contentline
-        int start = 0;
+        token = strtok_r(NULL, ";", &end_str);
+    }
 
-        for (int i = 0; i < strlen(part4); i++)
+    //Getting all values from contentline
+    int start = 0;
+
+    for (int i = 0; i < strlen(part4); i++)
+    {
+        if (part4[i] == ';' || part4[i + 1] == '\0')
         {
-            if (part4[i] == ';' || part4[i + 1] == '\0')
+            char *value = substring(part4, start, i);
+
+            if (value[0] == ';')
             {
-                char *value = substring(part4, start, i);
-
-                if (value[0] == ';')
-                {
-                    char *string = malloc(2);
-                    strcpy(string, "");
-                    insertBack(prop->values, string);
-                    // printf("empty value \n");
-                }
-                else
-                {
-                    if (value[strlen(value) - 1] == ';')
-                    {
-                        value[strlen(value) - 1] = '\0';
-                    }
-                    char *string = malloc(strlen(value) + 1);
-                    strcpy(string, value);
-                    insertBack(prop->values, string);
-                    // printf("%s \n", value);
-                }
-
-                start = i + 1;
-                free(value);
+                char *string = malloc(2);
+                strcpy(string, "");
+                insertBack(prop->values, string);
+                // printf("empty value \n");
             }
-        }
-        // printf("\n");
-        free(part4);
-        free(part3);
+            else
+            {
+                if (value[strlen(value) - 1] == ';')
+                {
+                    value[strlen(value) - 1] = '\0';
+                }
+                char *string = malloc(strlen(value) + 1);
+                strcpy(string, value);
+                insertBack(prop->values, string);
+                // printf("%s \n", value);
+            }
 
+            start = i + 1;
+            free(value);
+        }
+    }
+    // printf("\n");
+    free(part4);
+    free(part3);
+
+    if (strcmp(part2, "ANNIVERSARY") != 0 || strcmp(part2, "BDAY") != 0)
+    {
         if (strcmp(prop->name, "FN") == 0)
         {
             thecard->fn = prop;
@@ -272,11 +296,38 @@ void processProp(Card *thecard, char *contentLine)
         {
             insertBack(thecard->optionalProperties, prop);
         }
-        // deleteProperty(prop);
     }
+    // working on DateTime
     else
     {
+        DateTime *date = malloc(sizeof(DateTime));
+        date->UTC = checkDate(part4);
+        date->isText = checkText(prop);
+
+        if (date->isText)
+        {
+            date->text = (char *)prop->values->head->data;
+
+            date->date = malloc(2);
+            date->time = malloc(2);
+            strcpy(date->date, "");
+            strcpy(date->time, "");
+        }
+        else
+        {
+        }
+
+        // printf("%s \n", prop->name);
+
+        if (strcmp(part2, "ANNIVERSARY") == 0)
+        {
+        }
+        else
+        {
+        }
     }
+
+    // deleteProperty(prop);
 
     // free(part);
     // free(part2);
@@ -308,6 +359,8 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
             {
                 theCard = malloc(sizeof(Card));
                 theCard->optionalProperties = initializeList(&propertyToString, &deleteProperty, &compareProperties);
+                theCard->birthday = NULL;
+                theCard->anniversary = NULL;
             }
             else if (seen == 2)
             {
@@ -343,15 +396,14 @@ void deleteCard(Card *obj)
 
     temp = (Card *)obj;
     deleteProperty(temp->fn);
-    // deleteDate(temp->birthday);
-    // deleteDate(temp->anniversary);
+    deleteDate(temp->birthday);
+    deleteDate(temp->anniversary);
     freeList(temp->optionalProperties);
     free(temp);
 }
 
 char *cardToString(const Card *obj)
 {
-
     return NULL;
 }
 

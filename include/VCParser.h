@@ -71,7 +71,7 @@ typedef struct prop
 	List *parameters;
 
 	/*	Property value(s).  All objects in the list will be of type char* (string).
-		Every preoperty hgas at least one value, but some might have multiple values.
+		Every preoperty has at least one value, but some might have multiple values.
 		List of values must have at least one value in it.  List must never be NULL.
 	*/
 	List *values;
