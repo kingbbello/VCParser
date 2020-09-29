@@ -105,18 +105,6 @@ int count(char *text, char *toFind)
     return count;
 }
 
-void processValue(Property *theProp, char *subString)
-{
-    // char *token = strtok(subString, "=");
-
-    //     while (token != NULL)
-    //     {
-
-    // printf("%s \n", token);
-    //         token = strtok(NULL, " ");
-    //     }
-}
-
 bool checkDate(char *string)
 {
     if (string[strlen(string) - 1] == 'z' || string[strlen(string) - 1] == 'Z')
@@ -425,11 +413,19 @@ char *cardToString(const Card *obj)
         return NULL;
     }
     theCard = (Card *)obj;
+    char *fn = propertyToString(theCard->fn);
+    char *bday = dateToString(theCard->birthday);
+    char *anni = dateToString(theCard->anniversary);
+    char *optional = toString(theCard->optionalProperties);
 
-    len = strlen(propertyToString(theCard->fn)) + strlen(dateToString(theCard->birthday)) + strlen(dateToString(theCard->anniversary)) + strlen(toString(theCard->optionalProperties)) + 70;
+    len = strlen(fn) + strlen(bday) + strlen(anni) + strlen(optional) + 70;
     tempStr = malloc(len);
 
-    sprintf(tempStr, "FN:\n%s\nBirthday:\n\n%s\n\nAnniversary:\n%s\n\nLIST OF OPTIONAL PROPERTIES:%s", propertyToString(theCard->fn), dateToString(theCard->birthday), dateToString(theCard->anniversary), toString(theCard->optionalProperties));
+    sprintf(tempStr, "FN:\n%s\nBirthday:\n\n%s\n\nAnniversary:\n%s\n\nLIST OF OPTIONAL PROPERTIES:%s", fn, bday, anni, optional);
+    free(fn);
+    free(bday);
+    free(anni);
+    free(optional);
     return tempStr;
 }
 
@@ -478,10 +474,15 @@ char *propertyToString(void *prop)
     }
     theProp = (Property *)prop;
 
-    len = strlen(theProp->name) + strlen(theProp->group) + strlen(toString(theProp->parameters)) + strlen(toString(theProp->values)) + 70;
+    char *paramString = toString(theProp->parameters);
+    char *valueString = toString(theProp->values);
+
+    len = strlen(theProp->name) + strlen(theProp->group) + strlen(paramString) + strlen(valueString) + 70;
     tempStr = malloc(len);
 
-    sprintf(tempStr, "Group: %s, Name: %s \nList of Parameters \n%s\nList of Values\n%s", theProp->group, theProp->name, toString(theProp->parameters), toString(theProp->values));
+    sprintf(tempStr, "Group: %s, Name: %s \nList of Parameters \n%s\nList of Values\n%s", theProp->group, theProp->name, paramString, valueString);
+    free(paramString);
+    free(valueString);
     return tempStr;
 }
 
@@ -603,7 +604,7 @@ char *dateToString(void *date)
         strcpy(UTC, "False");
     }
 
-    len = strlen(theDate->date) + strlen(theDate->time) + strlen(theDate->text) + 6;
+    len = strlen(theDate->date) + strlen(theDate->time) + strlen(theDate->text) + 50;
     tempStr = malloc(len + 50);
     if (theDate->isText)
     {
@@ -614,6 +615,8 @@ char *dateToString(void *date)
         sprintf(tempStr, "UTC: %s, isText: false, Date : %s, Time : %s", UTC, theDate->date, theDate->time);
     }
 
+    free(UTC);
+
     return tempStr;
 }
 
@@ -622,11 +625,9 @@ int main()
     Card *theCard = NULL;
     // printf("%s \n",errorToString(INV_CARD));
     createCard("testCard.vcf", &theCard);
-    // char * text = cardToString(theCard);
-    // printf("%s", text);
-    // free(text);
+    char *text = cardToString(theCard);
+    printf("%s", text);
+    free(text);
     deleteCard(theCard);
-    // char *text = malloc(sizeof("VERSION:4.0"));
-    // processProp(*theCard, "VERSION:4.0");
     return 0;
 }
