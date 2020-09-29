@@ -281,10 +281,11 @@ void processProp(Card *thecard, char *contentLine)
         }
     }
     // printf("\n");
+    // printf("%s", toString(prop->values));
+    // printf("%s", propertyToString(prop));
 
     if (strcmp(part2, "ANNIVERSARY") != 0 && strcmp(part2, "BDAY") != 0)
     {
-        // printf("%s \n", part2);
         if (strcmp(prop->name, "FN") == 0)
         {
             thecard->fn = prop;
@@ -334,17 +335,11 @@ void processProp(Card *thecard, char *contentLine)
                     {
                         date->date = substring(values, 0, i - 1);
                         date->time = substring(values, i + 1, strlen(values));
-                        // printf("%s \n", date->date);
-                        // printf("%s \n", date->time);
                     }
                 }
             }
-
-            // printf("%s \n", values);
         }
-
-        // // printf("%s \n", prop->name);
-
+        // printf("%s \n", dateToString(date));
         if (strcmp(part2, "ANNIVERSARY") == 0)
         {
             thecard->anniversary = date;
@@ -357,13 +352,6 @@ void processProp(Card *thecard, char *contentLine)
     }
     free(part4);
     free(part3);
-
-    // deleteProperty(prop);
-
-    // free(part);
-    // free(part2);
-    // free(part3);
-    // free(part4);
 }
 
 VCardErrorCode createCard(char *fileName, Card **newCardObject)
@@ -428,7 +416,21 @@ void deleteCard(Card *obj)
 
 char *cardToString(const Card *obj)
 {
-    return NULL;
+    char *tempStr;
+    Card *theCard;
+    int len;
+
+    if (obj == NULL)
+    {
+        return NULL;
+    }
+    theCard = (Card *)obj;
+
+    len = strlen(propertyToString(theCard->fn)) + strlen(dateToString(theCard->birthday)) + strlen(dateToString(theCard->anniversary)) + strlen(toString(theCard->optionalProperties)) + 70;
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "FN:\n%s\nBirthday:\n\n%s\n\nAnniversary:\n%s\n\nLIST OF OPTIONAL PROPERTIES:%s", propertyToString(theCard->fn), dateToString(theCard->birthday), dateToString(theCard->anniversary), toString(theCard->optionalProperties));
+    return tempStr;
 }
 
 char *errorToString(VCardErrorCode err)
@@ -466,7 +468,21 @@ int compareProperties(const void *first, const void *second)
 
 char *propertyToString(void *prop)
 {
-    return NULL;
+    char *tempStr;
+    Property *theProp;
+    int len;
+
+    if (prop == NULL)
+    {
+        return NULL;
+    }
+    theProp = (Property *)prop;
+
+    len = strlen(theProp->name) + strlen(theProp->group) + strlen(toString(theProp->parameters)) + strlen(toString(theProp->values)) + 70;
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "Group: %s, Name: %s \nList of Parameters \n%s\nList of Values\n%s", theProp->group, theProp->name, toString(theProp->parameters), toString(theProp->values));
+    return tempStr;
 }
 
 void deleteParameter(void *toBeDeleted)
@@ -491,7 +507,23 @@ int compareParameters(const void *first, const void *second)
 
 char *parameterToString(void *param)
 {
-    return NULL;
+    char *tempStr;
+    int len;
+    Parameter *theParam;
+
+    if (param == NULL)
+    {
+        return NULL;
+    }
+
+    theParam = (Parameter *)param;
+
+    len = strlen(theParam->value) + strlen(theParam->name) + 30;
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "name: %s, value: %s", theParam->name, theParam->value);
+
+    return tempStr;
 }
 
 void deleteValue(void *toBeDeleted)
@@ -512,7 +544,20 @@ int compareValues(const void *first, const void *second)
 
 char *valueToString(void *val)
 {
-    return NULL;
+    char *values;
+
+    if (val == NULL)
+    {
+        return NULL;
+    }
+
+    values = (char *)val;
+    int len = strlen(val) + 15;
+    values = malloc(len);
+
+    sprintf(values, "value: %s", (char *)val);
+
+    return values;
 }
 
 void deleteDate(void *toBeDeleted)
@@ -538,7 +583,38 @@ int compareDates(const void *first, const void *second)
 
 char *dateToString(void *date)
 {
-    return NULL;
+    DateTime *theDate;
+    char *tempStr;
+    int len;
+
+    if (date == NULL)
+    {
+        return NULL;
+    }
+    theDate = (DateTime *)date;
+
+    char *UTC = malloc(6);
+    if (theDate->UTC)
+    {
+        strcpy(UTC, "True");
+    }
+    else
+    {
+        strcpy(UTC, "False");
+    }
+
+    len = strlen(theDate->date) + strlen(theDate->time) + strlen(theDate->text) + 6;
+    tempStr = malloc(len + 50);
+    if (theDate->isText)
+    {
+        sprintf(tempStr, "UTC: %s, isText: true, Text : %s", UTC, theDate->text);
+    }
+    else
+    {
+        sprintf(tempStr, "UTC: %s, isText: false, Date : %s, Time : %s", UTC, theDate->date, theDate->time);
+    }
+
+    return tempStr;
 }
 
 int main()
@@ -546,6 +622,9 @@ int main()
     Card *theCard = NULL;
     // printf("%s \n",errorToString(INV_CARD));
     createCard("testCard.vcf", &theCard);
+    // char * text = cardToString(theCard);
+    // printf("%s", text);
+    // free(text);
     deleteCard(theCard);
     // char *text = malloc(sizeof("VERSION:4.0"));
     // processProp(*theCard, "VERSION:4.0");
