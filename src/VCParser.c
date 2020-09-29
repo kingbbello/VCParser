@@ -1,8 +1,8 @@
-#define _GNU_SOURCE
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "../include/VCParser.h"
 
 char *readFile(char *fileName)
@@ -131,18 +131,21 @@ bool checkDate(char *string)
 
 bool checkText(Property *prop)
 {
-    List *params = prop->parameters;
-    Node *paramNode = params->head;
-    for (int i = 0; i < params->length; i++)
+    char *value = (char *)prop->values->head->data;
+    for (int i = 0; i < strlen(value); i++)
     {
-        Parameter *param = paramNode->data;
-        if (strcmp(param->name, "VALUE") == 0 && strcmp(param->value, "text") == 0)
+        if (isalpha(value[i]) == 0)
         {
-            return true;
+            return false;
         }
-        paramNode = paramNode->next;
+
+        if (i == 3)
+        {
+            break;
+        }
     }
-    return false;
+
+    return true;
 }
 
 //Takes a line from VCF and puts puts the appropriate date-time or Property into the Card
@@ -226,28 +229,23 @@ void processProp(Card *thecard, char *contentLine)
     prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
 
     //Get the parameters for all contentline
-    char *end_str;
-    char *token = strtok_r(part3, ";", &end_str);
+    char *token = strtok(part3, ";");
     while (token != NULL)
     {
         Parameter *param = malloc(sizeof(Parameter));
-        char *end_token;
-        char *token2 = strtok_r(token, "=", &end_token);
-        while (token2 != NULL)
+        for (int i = 0; i < strlen(token); i++)
         {
-            param->name = malloc(strlen(token2) + 1);
-            strcpy(param->name, token2);
-            // printf("name = %s\n", param->name);
-
-            token2 = strtok_r(NULL, "=", &end_token);
-            param->value = malloc(strlen(token2) + 1);
-            strcpy(param->value, token2);
-            // printf("value = %s\n", param->value);
-            insertBack(prop->parameters, param);
-            break;
+            if (token[i] == '=')
+            {
+                param->name = substring(token, 0, i - 1);
+                param->value = substring(token, i + 1, strlen(token));
+                // printf("name = %s \n", param->name);
+                // printf("value = %s \n", param->value);
+                insertBack(prop->parameters, param);
+            }
         }
 
-        token = strtok_r(NULL, ";", &end_str);
+        token = strtok(NULL, ";");
     }
 
     //Getting all values from contentline
@@ -283,11 +281,10 @@ void processProp(Card *thecard, char *contentLine)
         }
     }
     // printf("\n");
-    free(part4);
-    free(part3);
 
-    if (strcmp(part2, "ANNIVERSARY") != 0 || strcmp(part2, "BDAY") != 0)
+    if (strcmp(part2, "ANNIVERSARY") != 0 && strcmp(part2, "BDAY") != 0)
     {
+        // printf("%s \n", part2);
         if (strcmp(prop->name, "FN") == 0)
         {
             thecard->fn = prop;
@@ -304,9 +301,12 @@ void processProp(Card *thecard, char *contentLine)
         date->UTC = checkDate(part4);
         date->isText = checkText(prop);
 
+        char *values = (char *)prop->values->head->data;
+
         if (date->isText)
         {
-            date->text = (char *)prop->values->head->data;
+            date->text = malloc(strlen(values) + 1);
+            strcpy(date->text, values);
 
             date->date = malloc(2);
             date->time = malloc(2);
@@ -315,17 +315,48 @@ void processProp(Card *thecard, char *contentLine)
         }
         else
         {
+            date->text = malloc(2);
+            strcpy(date->text, "");
+
+            if (strchr(values, 'T') == NULL)
+            {
+                date->time = malloc(2);
+                strcpy(date->time, "");
+
+                date->date = malloc(strlen(values) + 1);
+                strcpy(date->date, values);
+            }
+            else
+            {
+                for (int i = 0; i < strlen(values); i++)
+                {
+                    if (values[i] == 'T')
+                    {
+                        date->date = substring(values, 0, i - 1);
+                        date->time = substring(values, i + 1, strlen(values));
+                        // printf("%s \n", date->date);
+                        // printf("%s \n", date->time);
+                    }
+                }
+            }
+
+            // printf("%s \n", values);
         }
 
-        // printf("%s \n", prop->name);
+        // // printf("%s \n", prop->name);
 
         if (strcmp(part2, "ANNIVERSARY") == 0)
         {
+            thecard->anniversary = date;
         }
         else
         {
+            thecard->birthday = date;
         }
+        deleteProperty(prop);
     }
+    free(part4);
+    free(part3);
 
     // deleteProperty(prop);
 
@@ -340,11 +371,10 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
 
     if (fileName == NULL)
     {
-        fprintf(stderr, "No file entered! Exiting...\n");
+        // fprintf(stderr, "No file entered! Exiting...\n");
         return INV_FILE;
     }
     char *text = readFile(fileName);
-    newCardObject = malloc(sizeof(Card));
 
     int start = 0;
     Card *theCard;
@@ -375,12 +405,6 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
             free(contentLine);
         }
     }
-
-    deleteCard(theCard);
-
-    // freeList(theCard->optionalProperties);
-    // free(theCard);
-    free(newCardObject);
     free(text);
     return OK;
 }
@@ -519,9 +543,10 @@ char *dateToString(void *date)
 
 int main()
 {
-    Card **theCard = NULL;
-    // printf("%s",errorToString(INV_CARD));
-    createCard("testCard.vcf", theCard);
+    Card *theCard = NULL;
+    // printf("%s \n",errorToString(INV_CARD));
+    createCard("testCard.vcf", &theCard);
+    deleteCard(theCard);
     // char *text = malloc(sizeof("VERSION:4.0"));
     // processProp(*theCard, "VERSION:4.0");
     return 0;
