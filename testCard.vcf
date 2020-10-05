@@ -1,9 +1,9 @@
 BEGIN:VCARD
 VERSION:4.0
 FN:Simon Perreault
-N:Perreault;Simon;;;ing. jr,M.Sc.. 
+N:Perreault;Simon;;;ing. jr,M.Sc.
 BDAY:--0203
-ANNIVERSARY;VALUE=uri:20090808T1430001
+ANNIVERSARY:20090808T143000
 GENDER:M
 LANG;PREF=1:fr
 LANG;PREF=2:en
