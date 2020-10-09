@@ -63,4 +63,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-/VCParser
+.vscode/
+*.vcf
+VCParser
+test1pre
+testfiles/
