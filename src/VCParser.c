@@ -799,29 +799,29 @@ char *dateToString(void *date)
     return tempStr;
 }
 
-void function(int *a){
-    (*a)++;
-}
+// void function(int *a){
+//     (*a)++;
+// }
 
-int main()
-{
-    // printf("%s \n",errorToString(INV_CARD));
-    Card *theCard = NULL;
-    char *error = errorToString(createCard("testCard.vcf", &theCard));
-    printf("%s \n\n\n\n\n\n\n", error);
+// int main()
+// {
+//     // printf("%s \n",errorToString(INV_CARD));
+//     Card *theCard = NULL;
+//     char *error = errorToString(createCard("testCard.vcf", &theCard));
+//     printf("%s \n\n\n\n\n\n\n", error);
 
-    // if (compare(error, "OK") == 0)
-    // {
-    // char *text = cardToString(theCard);
-    // printf("%s", text);
-    // free(text);
-    // }
+//     // if (compare(error, "OK") == 0)
+//     // {
+//     // char *text = cardToString(theCard);
+//     // printf("%s", text);
+//     // free(text);
+//     // }
 
-    if (compare(error, "OK") == 0)
-    {
-        deleteCard(theCard);
-    }
+//     if (compare(error, "OK") == 0)
+//     {
+//         deleteCard(theCard);
+//     }
 
-    free(error);
-    return 0;
-}
+//     free(error);
+//     return 0;
+// }
