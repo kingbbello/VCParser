@@ -3,59 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../include/VCParser.h"
+#include "VCParser.h"
 
-char *readFile(char *fileName)
-{
-    char *txt;
-
-    FILE *fptr = NULL;
-    fptr = fopen(fileName, "r");
-    if (fptr == NULL)
-    {
-        perror("Error opening file!");
-        return NULL;
-    }
-
-    fseek(fptr, 0, SEEK_END);
-    int length = ftell(fptr);
-    fseek(fptr, 0, SEEK_SET);
-    txt = malloc(length);
-    if (txt)
-    {
-        fread(txt, 1, length, fptr);
-    }
-    fclose(fptr);
-
-    length -= 1;
-    for (int i = 0; i < length - 3; i++)
-    {
-        if (txt[i] == '\n' && (txt[i + 1] == ' ' || txt[i + 1] == '\t'))
-        {
-            memmove(&txt[i], &txt[i + 1], length - i);
-            memmove(&txt[i], &txt[i + 1], length - i);
-            memmove(&txt[i - 1], &txt[i], length - i - 1);
-            
-            length -= 3;
-        }
-    }
-    txt[length] = '\0';
-    return txt;
-}
-
-char *trim(char *str)
-{
-    int i;
-    const char *seps = "\t\n\v\f\r ";
-
-    i = strlen(str) - 1;
-    while (i >= 0 && strchr(seps, str[i]) != NULL)
-    {
-        str[i] = '\0';
-        i--;
-    }
-    return str;
-}
 
 //if the uppercase string1 is equal to uppercase string2, return 0
 //if the lengths are not equal, return 25
@@ -76,6 +25,82 @@ int compare(char *string1, char *string2)
     }
 
     return 0;
+}
+
+bool checkExtension(char *filename)
+{
+    char *extension = strrchr(filename, '.');
+
+    if (extension == NULL)
+    {
+        return false;
+    }
+
+    if (compare(extension, ".vcf") == 0 || compare(extension, ".vcard") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+char *readFile(char *fileName)
+{
+    char *txt;
+
+    FILE *fptr = NULL;
+    fptr = fopen(fileName, "r");
+    if (fptr == NULL)
+    {
+        // perror("Error opening file!");
+        return NULL;
+    }
+
+    fseek(fptr, 0, SEEK_END);
+    int length = ftell(fptr);
+    fseek(fptr, 0, SEEK_SET);
+    txt = malloc(length);
+
+    if (length == 0)
+    {
+        free(txt);
+        fclose(fptr);
+        return NULL;
+    }
+
+    if (txt)
+    {
+        fread(txt, 1, length, fptr);
+    }
+    fclose(fptr);
+
+    length -= 1;
+    for (int i = 0; i < length - 3; i++)
+    {
+        if (txt[i] == '\n' && (txt[i + 1] == ' ' || txt[i + 1] == '\t'))
+        {
+            memmove(&txt[i], &txt[i + 1], length - i);
+            memmove(&txt[i], &txt[i + 1], length - i);
+            memmove(&txt[i - 1], &txt[i], length - i - 1);
+
+            length -= 3;
+        }
+    }
+    txt[length] = '\0';
+    return txt;
+}
+
+char *trim(char *str)
+{
+    int i;
+    const char *seps = "\t\n\v\f\r ";
+
+    i = strlen(str) - 1;
+    while (i >= 0 && strchr(seps, str[i]) != NULL)
+    {
+        str[i] = '\0';
+        i--;
+    }
+    return str;
 }
 
 char *substring(char *string, int start, int end)
@@ -142,25 +167,22 @@ bool checkDate(char *string)
 
 bool checkText(Property *prop)
 {
-    char *value = (char *)prop->values->head->data;
-    for (int i = 0; i < strlen(value); i++)
+    List *params = prop->parameters;
+    Node *paramNode = params->head;
+    for (int i = 0; i < params->length; i++)
     {
-        if (isalpha(value[i]) == 0)
+        Parameter *param = paramNode->data;
+        if (strcmp(param->name, "VALUE") == 0 && strcmp(param->value, "text") == 0)
         {
-            return false;
+            return true;
         }
-
-        if (i == 3)
-        {
-            break;
-        }
+        paramNode = paramNode->next;
     }
-
-    return true;
+    return false;
 }
 
 //Takes a line from VCF and puts puts the appropriate date-time or Property into the Card
-VCardErrorCode processProp(Card *thecard, char *contentLine)
+VCardErrorCode processProp(Card *thecard, char *contentLine, int *DATE, int *ANNIVERSARY, int *FN)
 {
     char *part;  // for holding groups
     char *part2; // for holding names
@@ -179,6 +201,10 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
                 break;
             }
         }
+    }
+    else
+    {
+        return INV_PROP;
     }
 
     //Splitting into parameters
@@ -238,6 +264,13 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
     char *token = strtok(part3, ";");
     while (token != NULL)
     {
+        if (strchr(token, '=') == NULL)
+        {
+            free(part3);
+            free(part4);
+            deleteProperty(prop);
+            return INV_PROP;
+        }
         Parameter *param = malloc(sizeof(Parameter));
         for (int i = 0; i < strlen(token); i++)
         {
@@ -245,7 +278,18 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
             {
                 param->name = substring(token, 0, i - 1);
                 param->value = substring(token, i + 1, strlen(token));
+
+                if (strcmp(param->name, "") == 0 || strcmp(param->value, "") == 0)
+                {
+                    free(part3);
+                    free(part4);
+                    deleteParameter(param);
+                    deleteProperty(prop);
+                    return INV_PROP;
+                }
+
                 insertBack(prop->parameters, param);
+                break;
             }
         }
 
@@ -283,20 +327,37 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
         }
     }
 
+
+    if ((strcmp(prop->name, "") == 0 || prop->values->length == 0) && strcmp(prop->name,"END") !=0)
+    {
+        free(part3);
+        free(part4);
+        deleteProperty(prop);
+        return INV_PROP;
+    }
+
     if (compare(part2, "ANNIVERSARY") != 0 && compare(part2, "BDAY") != 0)
     {
         if (compare(prop->name, "FN") == 0)
         {
-            thecard->fn = prop;
+            if((*FN) == 0){
+                thecard->fn = prop;
+                (*FN)++;
+            }else{
+                insertBack(thecard->optionalProperties, prop);
+            }
+            
         }
         else
         {
-            if(compare(prop->name, "VERSION") != 0){
+            if (compare(prop->name, "VERSION") != 0)
+            {
                 insertBack(thecard->optionalProperties, prop);
-            }else{
+            }
+            else
+            {
                 deleteProperty(prop);
             }
-            
         }
     }
     // working on DateTime
@@ -346,13 +407,30 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
 
         if (compare(part2, "ANNIVERSARY") == 0)
         {
-            thecard->anniversary = date;
+            if((*ANNIVERSARY) == 0){
+                thecard->anniversary = date;
+                (*ANNIVERSARY)++;
+                deleteProperty(prop);
+            }else{
+                insertBack(thecard->optionalProperties, prop);
+                deleteDate(date);
+            }
+            
         }
         else
         {
-            thecard->birthday = date;
+            if((*DATE) == 0){
+                thecard->birthday = date;
+                (*DATE)++;
+                deleteProperty(prop);
+            }else{
+                insertBack(thecard->optionalProperties, prop);
+                deleteDate(date);
+            }
+            
         }
-        deleteProperty(prop);
+
+        
     }
     free(part4);
     free(part3);
@@ -362,21 +440,28 @@ VCardErrorCode processProp(Card *thecard, char *contentLine)
 VCardErrorCode createCard(char *fileName, Card **newCardObject)
 {
 
-    if (fileName == NULL)
+    if (fileName == NULL || strcmp(fileName, "") == 0 || !checkExtension(fileName))
     {
         return INV_FILE;
     }
     char *text = readFile(fileName);
 
+    if (text == NULL)
+    {
+        return INV_FILE;
+    }
     int start = 0;
     int end = 0;
     Card *theCard;
     int begin = 0;
     int process = 0;
+    int FN = 0;
+    int ANNIVERSARY = 0;
+    int DATE = 0;
 
     for (int i = 0; i < strlen(text); i++)
     {
-        if ((text[i] == '\n' && text[i-1] == '\r' )|| text[i + 1] == '\0')
+        if ((text[i] == '\n' && text[i - 1] == '\r') || text[i + 1] == '\0')
         {
             char *contentLine = substring(text, start, i);
             int seen = curProcess(contentLine);
@@ -385,6 +470,7 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
             {
                 begin = 1;
                 theCard = malloc(sizeof(Card));
+                theCard->fn = NULL;
                 theCard->optionalProperties = initializeList(&propertyToString, &deleteProperty, &compareProperties);
                 theCard->birthday = NULL;
                 theCard->anniversary = NULL;
@@ -405,24 +491,45 @@ VCardErrorCode createCard(char *fileName, Card **newCardObject)
                     free(text);
                     return INV_CARD;
                 }
-                
-                if(process == 1 && compare(contentLine, "VERSION:4.0")){
+
+                if (process == 1 && strcmp(contentLine, "VERSION:4.0"))
+                {
                     free(contentLine);
                     free(text);
-                    freeList(theCard->optionalProperties);
-                    free(theCard);
+                    deleteCard(theCard);
                     return INV_CARD;
                 }
 
-                processProp(theCard, contentLine);
+                VCardErrorCode code = processProp(theCard, contentLine, &DATE, &ANNIVERSARY, &FN);
+
+                if (code != OK)
+                {
+                    deleteCard(theCard);
+                    free(contentLine);
+                    free(text);
+                    return code;
+                }
             }
 
             start = i + 1;
             free(contentLine);
         }
+        else
+        {
+            // deleteCard(theCard);
+            // free(text);
+            // return INV_PROP;
+        }
     }
 
-    if(end == 0){
+    // if(theCard->fn == NULL){
+    //     deleteCard(theCard);
+    //     free(text);
+    //     return INV_CARD;
+    // }
+
+    if (end == 0 || theCard->fn == NULL)
+    {
         deleteCard(theCard);
         free(text);
         return INV_CARD;
@@ -457,7 +564,9 @@ char *cardToString(const Card *obj)
 
     if (obj == NULL)
     {
-        return NULL;
+        char *ret = malloc(6);
+        strcpy(ret, "NULL");
+        return ret;
     }
     theCard = (Card *)obj;
     char *fn = propertyToString(theCard->fn);
@@ -483,6 +592,13 @@ char *cardToString(const Card *obj)
 
 char *errorToString(VCardErrorCode err)
 {
+    if (err > 6 || err < 0)
+    {
+        char *ret = malloc(20);
+        strcpy(ret, "Invalid Error Code");
+        return ret;
+    }
+
     char *ERRORSTRING[] = {"OK", "INV_FILE", "INV_CARD", "INV_PROP", "INV_DT", "WRITE_ERROR", "OTHER_ERROR"};
     char *ret = malloc(strlen(ERRORSTRING[err]) + 1);
     strcpy(ret, ERRORSTRING[err]);
@@ -522,7 +638,9 @@ char *propertyToString(void *prop)
 
     if (prop == NULL)
     {
-        return NULL;
+        char *ret = malloc(6);
+        strcpy(ret, "NULL");
+        return ret;
     }
     theProp = (Property *)prop;
 
@@ -569,7 +687,9 @@ char *parameterToString(void *param)
 
     if (param == NULL)
     {
-        return NULL;
+        char *ret = malloc(6);
+        strcpy(ret, "NULL");
+        return ret;
     }
 
     theParam = (Parameter *)param;
@@ -604,7 +724,9 @@ char *valueToString(void *val)
 
     if (val == NULL)
     {
-        return NULL;
+        char *ret = malloc(6);
+        strcpy(ret, "NULL");
+        return ret;
     }
 
     values = (char *)val;
@@ -645,7 +767,9 @@ char *dateToString(void *date)
 
     if (date == NULL)
     {
-        return NULL;
+        char *ret = malloc(6);
+        strcpy(ret, "NULL");
+        return ret;
     }
     theDate = (DateTime *)date;
 
@@ -675,23 +799,29 @@ char *dateToString(void *date)
     return tempStr;
 }
 
-int main()
-{
-    // printf("%s \n",errorToString(INV_CARD));
-    Card *theCard = NULL;
-    char *error = errorToString(createCard("testCard.vcf", &theCard));
-    printf("%s \n", error);
+// void function(int *a){
+//     (*a)++;
+// }
 
-    if (compare(error, "OK") == 0)
-    {
-        char *text = cardToString(theCard);
-        printf("%s", text);
-        free(text);
-    }
+// int main()
+// {
+//     // printf("%s \n",errorToString(INV_CARD));
+//     Card *theCard = NULL;
+//     char *error = errorToString(createCard("testCard.vcf", &theCard));
+//     printf("%s \n\n\n\n\n\n\n", error);
 
-    free(error);
+//     // if (compare(error, "OK") == 0)
+//     // {
+//     // char *text = cardToString(theCard);
+//     // printf("%s", text);
+//     // free(text);
+//     // }
 
-    deleteCard(theCard);
-    // printf("%d \n" ,compare("hello", "HelLo"));
-    return 0;
-}
+//     if (compare(error, "OK") == 0)
+//     {
+//         deleteCard(theCard);
+//     }
+
+//     free(error);
+//     return 0;
+// }
