@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "VCParser.h"
-
+#include "VCParser_A2temp.h"
 
 //if the uppercase string1 is equal to uppercase string2, return 0
 //if the lengths are not equal, return 25
@@ -327,8 +326,7 @@ VCardErrorCode processProp(Card *thecard, char *contentLine, int *DATE, int *ANN
         }
     }
 
-
-    if ((strcmp(prop->name, "") == 0 || prop->values->length == 0) && strcmp(prop->name,"END") !=0)
+    if ((strcmp(prop->name, "") == 0 || prop->values->length == 0) && strcmp(prop->name, "END") != 0)
     {
         free(part3);
         free(part4);
@@ -340,13 +338,15 @@ VCardErrorCode processProp(Card *thecard, char *contentLine, int *DATE, int *ANN
     {
         if (compare(prop->name, "FN") == 0)
         {
-            if((*FN) == 0){
+            if ((*FN) == 0)
+            {
                 thecard->fn = prop;
                 (*FN)++;
-            }else{
+            }
+            else
+            {
                 insertBack(thecard->optionalProperties, prop);
             }
-            
         }
         else
         {
@@ -407,30 +407,32 @@ VCardErrorCode processProp(Card *thecard, char *contentLine, int *DATE, int *ANN
 
         if (compare(part2, "ANNIVERSARY") == 0)
         {
-            if((*ANNIVERSARY) == 0){
+            if ((*ANNIVERSARY) == 0)
+            {
                 thecard->anniversary = date;
                 (*ANNIVERSARY)++;
                 deleteProperty(prop);
-            }else{
+            }
+            else
+            {
                 insertBack(thecard->optionalProperties, prop);
                 deleteDate(date);
             }
-            
         }
         else
         {
-            if((*DATE) == 0){
+            if ((*DATE) == 0)
+            {
                 thecard->birthday = date;
                 (*DATE)++;
                 deleteProperty(prop);
-            }else{
+            }
+            else
+            {
                 insertBack(thecard->optionalProperties, prop);
                 deleteDate(date);
             }
-            
         }
-
-        
     }
     free(part4);
     free(part3);
@@ -803,25 +805,161 @@ char *dateToString(void *date)
 //     (*a)++;
 // }
 
-// int main()
-// {
-//     // printf("%s \n",errorToString(INV_CARD));
-//     Card *theCard = NULL;
-//     char *error = errorToString(createCard("testCard.vcf", &theCard));
-//     printf("%s \n\n\n\n\n\n\n", error);
+VCardErrorCode writeCard(const char *fileName, const Card *obj)
+{
+    if (obj == NULL || fileName == NULL || strcmp(fileName, "") == 0)
+    {
+        return WRITE_ERROR;
+    }
+    FILE *fptr;
 
-//     // if (compare(error, "OK") == 0)
-//     // {
-//     // char *text = cardToString(theCard);
-//     // printf("%s", text);
-//     // free(text);
-//     // }
+    fptr = fopen("card.vcf", "w");
 
-//     if (compare(error, "OK") == 0)
-//     {
-//         deleteCard(theCard);
-//     }
+    if (fptr == NULL)
+    {
+        printf("Error!");
+        return WRITE_ERROR;
+    }
 
-//     free(error);
-//     return 0;
-// }
+    fprintf(fptr, "%s", "BEGIN:VCARD\r\n");
+    fprintf(fptr, "%s", "VERSION:4.0\r\n");
+
+    // Working on FN
+    Property *fn = obj->fn;
+    if (strcmp(fn->group, "") != 0)
+    {
+        fprintf(fptr, "%s%c", fn->group, '.');
+    }
+
+    fprintf(fptr, "%s", fn->name);
+
+    void *fn_value;
+    ListIterator iter = createIterator(fn->values);
+    int count = 0;
+    while ((fn_value = nextElement(&iter)) != NULL)
+    {
+        char c = ';';
+        if (count == 0)
+        {
+            c = ':';
+            count++;
+        }
+        fprintf(fptr, "%c%s", c, (char *)fn_value);
+    }
+    fprintf(fptr, "%s", "\r\n");
+
+    // Working on BirthDay
+    DateTime *birthDay = obj->birthday;
+    fprintf(fptr, "%s", "BDAY:");
+    if (birthDay->isText)
+    {
+        fprintf(fptr, "%s%s", birthDay->text, "\r\n");
+    }
+    else
+    {
+        if (strcmp(birthDay->time, "") == 0)
+        {
+            fprintf(fptr, "%s", birthDay->date);
+        }else{
+            fprintf(fptr, "%sT%s", birthDay->date, birthDay->time);
+        }
+
+        if(birthDay->UTC){
+            fprintf(fptr, "%s", "Z\r\n");
+        }else{
+            fprintf(fptr, "%s", "\r\n");
+        }
+    }
+
+    // Working on Anniversary
+    DateTime *anniversary = obj->anniversary;
+    fprintf(fptr, "%s", "ANNIVERSARY:");
+    if (anniversary->isText)
+    {
+        fprintf(fptr, "%s%s", anniversary->text, "\r\n");
+    }
+    else
+    {
+        if (strcmp(anniversary->time, "") == 0)
+        {
+            fprintf(fptr, "%s", anniversary->date);
+        }else{
+            fprintf(fptr, "%sT%s", anniversary->date, anniversary->time);
+        }
+
+        if(anniversary->UTC){
+            fprintf(fptr, "%s", "Z\r\n");
+        }else{
+            fprintf(fptr, "%s", "\r\n");
+        }
+    }
+
+    // Working on List of Optional Properties
+    Property *property;
+    List *properties = obj->optionalProperties;
+    ListIterator propertyIter = createIterator(properties);
+    while ((property = nextElement(&propertyIter)) != NULL)
+    {
+        //group
+        if (strcmp(property->group, "") != 0)
+        {
+            fprintf(fptr, "%s%c", property->group, '.');
+        }
+        //name
+        fprintf(fptr, "%s", property->name);
+
+        //parameters
+        Parameter *param;
+        ListIterator paramIter = createIterator(property->parameters);
+        while ((param = nextElement(&paramIter)) != NULL)
+        {
+            fprintf(fptr, "%c%s=%s", ';', param->name, param->value);
+        }
+
+        //values
+        void *prop_value;
+        ListIterator iterVal = createIterator(property->values);
+        int i = 0;
+        while ((prop_value = nextElement(&iterVal)) != NULL)
+        {
+            char c = ';';
+            if (i == 0)
+            {
+                c = ':';
+                i++;
+            }
+            fprintf(fptr, "%c%s", c, (char *)prop_value);
+        }
+
+        fprintf(fptr, "%s", "\r\n");
+    }
+
+    fprintf(fptr, "%s", "END:VCARD");
+    fclose(fptr);
+
+    return OK;
+}
+
+int main()
+{
+    // printf("%s \n",errorToString(INV_CARD));
+    Card *theCard = NULL;
+    char *error = errorToString(createCard("testCard.vcf", &theCard));
+    writeCard("Hello", theCard);
+    // printf("%s \n\n\n\n\n\n\n", error);
+
+    // if (compare(error, "OK") == 0)
+    // {
+    // char *text = cardToString(theCard);
+    // printf("%s", text);
+    // free(text);
+    // }
+
+    if (compare(error, "OK") == 0)
+    {
+        deleteCard(theCard);
+    }
+
+    free(error);
+    return 0;
+}
