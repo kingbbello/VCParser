@@ -5,7 +5,7 @@ BDAY:--0203
 ANNIVERSARY:20090808T143000
 N:Perreault;Simon;;;ing. jr,M.Sc.
 GENDER:M
-LANG;PREF=1:fr
+LANG:fr
 LANG;PREF=2:en
 ORG;TYPE=work:Viagenie
 ADR;TYPE=work:;Suite D2-630;2875 Laurier;Quebec;QC;G1V 2M2;Canada
