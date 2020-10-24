@@ -102,6 +102,20 @@ char *trim(char *str)
     return str;
 }
 
+char *trim2(char *str)
+{
+    int i;
+    const char *seps = "]\"";
+
+    i = strlen(str) - 1;
+    while (i >= 0 && strchr(seps, str[i]) != NULL)
+    {
+        str[i] = '\0';
+        i--;
+    }
+    return str;
+}
+
 char *substring(char *string, int start, int end)
 {
     int len = end - start + 2;
@@ -167,7 +181,10 @@ VCardErrorCode processProp(Card *thecard, char *contentLine, int *DATE, int *ANN
     char *part2; // for holding names
     char *part3; // for holding parameters
     char *part4; // for holding values
-
+    if (contentLine[strlen(contentLine) - 1] == ';')
+    {
+        return INV_PROP;
+    }
     //Splitting into values
     if (strchr(contentLine, ':') != NULL)
     {
@@ -790,10 +807,6 @@ char *dateToString(void *date)
 //     (*a)++;
 // }
 
-// VCardErrorCode writeCard(const char *fileName, const Card *obj){
-//     return OK;
-// }
-
 VCardErrorCode writeCard(const char *fileName, const Card *obj)
 {
 
@@ -881,7 +894,7 @@ VCardErrorCode writeCard(const char *fileName, const Card *obj)
 
     // Working on Anniversary
     DateTime *anniversary = (DateTime *)obj->anniversary;
-    
+
     if (anniversary != NULL)
     {
         fprintf(fptr, "%s", "ANNIVERSARY");
@@ -961,12 +974,78 @@ VCardErrorCode writeCard(const char *fileName, const Card *obj)
 
 char *strListToJSON(const List *strList)
 {
-    return NULL;
+    if (strList == NULL)
+    {
+        return NULL;
+    }
+
+    if (strList->length == 0)
+    {
+        char *ret = malloc(3);
+        strcpy(ret, "[]");
+        return ret;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    char *value;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((value = nextElement(&iter)) != NULL)
+    {
+        len += strlen(value) + 3;
+        tempStr = realloc(tempStr, len);
+        strcat(tempStr, "\"");
+        strcat(tempStr, value);
+        strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
 }
 
 List *JSONtoStrList(const char *str)
 {
-    return NULL;
+    if (str == NULL)
+    {
+        return NULL;
+    }
+
+    List *theList = initializeList(&valueToString, &deleteValue, &compareValues);
+
+    char *string = NULL;
+    if (str[0] == '[' && str[strlen(str) - 1] == ']')
+    {
+        
+        string = substring((char *)str, 1, strlen((char*)str) - 2);
+        
+        // printf("%s -> %s : %c\n", str, string, string[strlen(string) -1]);
+    }
+    else
+    {
+        return NULL;
+    }
+
+    int start = -1;
+    for (int i = 0; i < strlen(string); i++)
+    {
+        if (string[i] == '\"' && (string[i + 1] == '\0' || string[i + 1] == ','))
+        {
+            char *text = substring(string, start + 2, i -1);
+            insertFront(theList,text);
+            start = i + 1;
+        }
+    }
+    free(string);
+    return theList;
 }
 
 char *propToJSON(const Property *prop)
@@ -1000,11 +1079,11 @@ void addProperty(Card *card, const Property *toBeAdded)
 
 bool checkExist(char *name)
 {
-    char *array[34] = {"SOURCE", "KIND", "XML", "N", "NICKNAME", "PHOTO", "BDAY", "ANNIVERSARY", "GENDER", "ADR", "TEL", "EMAIL", "IMPP", "LANG", "TZ",
+    char *array[32] = {"SOURCE", "KIND", "XML", "N", "NICKNAME", "PHOTO", "GENDER", "ADR", "TEL", "EMAIL", "IMPP", "LANG", "TZ",
                        "GEO", "TITLE", "ROLE", "LOGO", "ORG", "MEMBER", "RELATED", "CATEGORIES", "NOTE", "PRODID", "REV", "SOUND", "UID", "CLIENTPIDMAP", "URL", "KEY", "FBURL",
                        "CALADRURI", "CALURI"};
 
-    for (int i = 0; i < 34; i++)
+    for (int i = 0; i < 32; i++)
     {
         if (compare(name, array[i]) == 0)
         {
@@ -1012,6 +1091,131 @@ bool checkExist(char *name)
         }
     }
     return false;
+}
+
+VCardErrorCode checkCardinality(Card *card)
+{
+    char *array[6] = {"KIND", "N", "GENDER", "PRODID", "REV", "UID"};
+
+    for (int i = 0; i < 6; i++)
+    {
+        int count = 0;
+        Property *property;
+        List *properties = card->optionalProperties;
+        ListIterator propertyIter = createIterator(properties);
+        while ((property = nextElement(&propertyIter)) != NULL)
+        {
+            if (compare(array[i], property->name) == 0)
+            {
+                count++;
+            }
+            if (count > 1)
+            {
+                return INV_PROP;
+            }
+        }
+    }
+    return OK;
+}
+
+VCardErrorCode checkKind(Property *prop)
+{
+    if (prop->values->length != 1)
+    {
+        return INV_PROP;
+    }
+
+    char *array[4] = {"individual", "org", "group", "location"};
+    int count = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        if (strcmp(array[i], prop->values->head->data) == 0)
+        {
+            count++;
+        }
+    }
+    return count == 0 ? INV_PROP : OK;
+}
+
+VCardErrorCode checkGender(Property *prop)
+{
+    if (prop->values->length > 2)
+    {
+        return INV_PROP;
+    }
+
+    char *array[6] = {"", "M", "F", "O", "N", "U"};
+
+    int count = 0;
+    for (int i = 0; i < 6; i++)
+    {
+        if (strcmp(array[i], prop->values->head->data) == 0)
+        {
+            count++;
+        }
+    }
+    return count == 0 ? INV_PROP : OK;
+}
+
+VCardErrorCode checkMember(Card *card)
+{
+    bool isGroup = false;
+    Property *property;
+    List *properties = card->optionalProperties;
+    ListIterator propertyIter = createIterator(properties);
+    while ((property = nextElement(&propertyIter)) != NULL)
+    {
+        if (compare("kind", property->name) == 0)
+        {
+            isGroup = strcmp(property->values->head->data, "group") == 0 ? true : false;
+        }
+    }
+    return isGroup ? OK : INV_PROP;
+}
+
+VCardErrorCode checkPid(Property *prop)
+{
+    if (prop->values->length > 2)
+    {
+        return INV_PROP;
+    }
+
+    char *text = prop->values->head->data;
+    for (int i = 0; i < strlen(text); i++)
+    {
+        if (isdigit(text[i]) == 0)
+        {
+            return INV_PROP;
+        }
+    }
+    return OK;
+}
+
+VCardErrorCode checkProperty(Property *prop)
+{
+    // bool isGroup = false;
+    if (compare("KIND", prop->name) == 0)
+    {
+        // isGroup = strcmp(prop->values->head->data, "group") == 0 ? true : false;
+        return checkKind(prop);
+    }
+    else if (compare("N", prop->name) == 0)
+    {
+        return prop->values->length == 5 ? OK : INV_PROP;
+    }
+    else if (compare("GENDER", prop->name) == 0)
+    {
+        return checkGender(prop);
+    }
+    else if (compare("CLIENTPIDMAP", prop->name) == 0)
+    {
+        return checkPid(prop);
+    }
+    else
+    {
+        return OK;
+    }
+    return OK;
 }
 
 VCardErrorCode validateCard(const Card *obj)
@@ -1063,7 +1267,74 @@ VCardErrorCode validateCard(const Card *obj)
             }
         }
 
-        //checking
+        //checking each property for cardinality
+        if (checkCardinality((Card *)obj) != OK)
+        {
+            return checkCardinality((Card *)obj);
+        }
+
+        //checking each property for specifics
+        if (checkProperty(property) != OK)
+        {
+            return checkProperty(property);
+        }
+
+        if (compare("MEMBER", property->name) == 0)
+        {
+            if (checkMember((Card *)obj) != OK)
+            {
+                return checkMember((Card *)obj);
+            }
+        }
+    }
+
+    if (obj->birthday != NULL)
+    {
+        DateTime *bday = obj->birthday;
+
+        if (bday->text == NULL || bday->time == NULL || bday->date == NULL)
+        {
+            return INV_DT;
+        }
+
+        if (bday->isText)
+        {
+            if (strcmp(bday->time, "") != 0 || strcmp(bday->date, "") != 0)
+            {
+                return INV_DT;
+            }
+            if (strcmp(bday->text, "") == 0)
+            {
+                return INV_DT;
+            }
+            if (bday->UTC)
+            {
+                return INV_DT;
+            }
+        }
+        else
+        {
+            if (strcmp(bday->text, "") != 0)
+            {
+                return INV_DT;
+            }
+            if (strcmp(bday->time, "") == 0 && strcmp(bday->date, "") == 0)
+            {
+                return INV_DT;
+            }
+        }
+
+        if (bday->UTC)
+        {
+            if (strcmp(bday->text, "") != 0)
+            {
+                return INV_DT;
+            }
+            if (strcmp(bday->time, "") == 0)
+            {
+                return INV_DT;
+            }
+        }
     }
 
     return OK;
@@ -1073,14 +1344,15 @@ int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
-    createCard("testFiles/valid/testCard-BdayText.vcf", &theCard);
+    createCard("testCard.vcf", &theCard);
     // printf("%s \n", errorToString(validateCard(theCard)));
-    // validateCard(theCard);
-    writeCard("studentOutput/testCard.vcf", theCard);
+    // Property *prop = theCard->optionalProperties->head->data;
 
-    Card *card = NULL;
-    createCard("studentOutput/testCard.vcf", &card);
-    deleteCard(card);
+    char *test = "[\"Perreault\",\"Simon\"]";
+    // printf("%s \n", test);
+    JSONtoStrList(test);
+    // free(test);
+    // validateCard(theCard);
     deleteCard(theCard);
     return 0;
 }
