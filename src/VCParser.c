@@ -1024,9 +1024,7 @@ List *JSONtoStrList(const char *str)
     char *string = NULL;
     if (str[0] == '[' && str[strlen(str) - 1] == ']')
     {
-        
-        string = substring((char *)str, 1, strlen((char*)str) - 2);
-        
+        string = substring((char *)str, 1, strlen((char *)str) - 2);
         // printf("%s -> %s : %c\n", str, string, string[strlen(string) -1]);
     }
     else
@@ -1039,8 +1037,8 @@ List *JSONtoStrList(const char *str)
     {
         if (string[i] == '\"' && (string[i + 1] == '\0' || string[i + 1] == ','))
         {
-            char *text = substring(string, start + 2, i -1);
-            insertFront(theList,text);
+            char *text = substring(string, start + 2, i - 1);
+            insertBack(theList, text);
             start = i + 1;
         }
     }
@@ -1050,31 +1048,287 @@ List *JSONtoStrList(const char *str)
 
 char *propToJSON(const Property *prop)
 {
-    return NULL;
+    if (prop == NULL)
+    {
+        char *ret = malloc(2);
+        strcpy(ret, "");
+        return ret;
+    }
+
+    char *tempStr;
+    char *values = strListToJSON(prop->values);
+
+    int valueLen = values != NULL ? strlen(values) : 0;
+
+    int len = 50 + strlen(prop->name) + strlen(prop->group) + valueLen;
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "{\"group\":\"%s\",\"name\":\"%s\",\"values\":%s}", prop->group, prop->name, values);
+    free(values);
+    return tempStr;
 }
 
 Property *JSONtoProp(const char *str)
 {
-    return NULL;
+    if (str == NULL)
+    {
+        return NULL;
+    }
+
+    Property *prop = malloc(sizeof(Property));
+    prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
+
+    char *string = NULL;
+    if (str[0] == '{' && str[strlen(str) - 1] == '}')
+    {
+        string = substring((char *)str, 1, strlen((char *)str) - 2);
+        // printf("%s -> %s : %c\n", str, string, string[strlen(string) -1]);
+    }
+    else
+    {
+        return NULL;
+    }
+
+    if (string == NULL)
+    {
+        return NULL;
+    }
+
+    char *token = strtok(string, ",");
+    int j = 0;
+    while (j < 3)
+    {
+        if (strchr(token, '\"') == NULL || strchr(token, ':') == NULL)
+        {
+            return NULL;
+        }
+        for (int i = 0; i < strlen(token); i++)
+        {
+            if ((token[i] == ':' && token[i + 1] == '\"') || (token[i] == '[' && i + 1 < strlen(token) && token[i + 1] == '\"'))
+            {
+                if (j == 2)
+                {
+                    char *text = substring(token, i, strlen(token));
+                    prop->values = JSONtoStrList(text);
+                    free(text);
+                }
+                else
+                {
+                    char *text = substring(token, i + 2, strlen(token) - 2);
+                    if (j == 0)
+                    {
+                        prop->group = text;
+                    }
+                    else
+                    {
+                        prop->name = text;
+                    }
+                }
+            }
+        }
+
+        j++;
+        if (j == 2)
+        {
+            token = strtok(NULL, "");
+            // printf(" %s\n", token);
+        }
+        else
+        {
+            token = strtok(NULL, ",");
+        }
+    }
+    free(string);
+    return prop;
 }
 
 char *dtToJSON(const DateTime *prop)
 {
-    return NULL;
+    if (prop == NULL)
+    {
+        char *ret = malloc(2);
+        strcpy(ret, "");
+        return ret;
+    }
+
+    char *UTC = malloc(6);
+    if (prop->UTC)
+    {
+        strcpy(UTC, "true");
+    }
+    else
+    {
+        strcpy(UTC, "false");
+    }
+
+    char *isText = malloc(6);
+    if (prop->isText)
+    {
+        strcpy(isText, "true");
+    }
+    else
+    {
+        strcpy(isText, "false");
+    }
+
+    char *tempStr;
+    int len = 60 + 20 + strlen(prop->date) + strlen(prop->text) + strlen(prop->time);
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "{\"isText\":%s,\"date\":\"%s\",\"time\":\"%s\",\"text\":\"%s\",\"isUTC\":%s}", isText, prop->date, prop->time, prop->text, UTC);
+
+    free(UTC);
+    free(isText);
+    return tempStr;
 }
 
 DateTime *JSONtoDT(const char *str)
 {
-    return NULL;
+    if (str == NULL)
+    {
+        return NULL;
+    }
+
+    DateTime *dt = malloc(sizeof(DateTime));
+
+    char *string = NULL;
+    if (str[0] == '{' && str[strlen(str) - 1] == '}')
+    {
+        string = substring((char *)str, 1, strlen((char *)str) - 2);
+        // printf("%s -> %s : %c\n", str, string, string[strlen(string) -1]);
+    }
+    else
+    {
+        return NULL;
+    }
+
+    if (string == NULL)
+    {
+        return NULL;
+    }
+
+    char *token = strtok(string, ",");
+    int j = 0;
+    while (j < 5)
+    {
+        if (strchr(token, '\"') == NULL || strchr(token, ':') == NULL)
+        {
+            return NULL;
+        }
+
+        for (int i = 0; i < strlen(token); i++)
+        {
+            if ((token[i] == '\"' && token[i + 1] == ':'))
+            {
+                if (j == 0 || j == 4)
+                {
+                    char *text = substring(token, i + 2, strlen(token));
+                    if (j == 0)
+                    {
+                        if (strcmp(text, "false") == 0)
+                        {
+                            dt->isText = false;
+                        }
+                        else
+                        {
+                            dt->isText = true;
+                        }
+                    }
+                    else
+                    {
+                        if (strcmp(text, "false") == 0)
+                        {
+                            dt->UTC = false;
+                        }
+                        else
+                        {
+                            dt->UTC = true;
+                        }
+                    }
+                    free(text);
+                }
+                else
+                {
+                    char *text = substring(token, i + 3, strlen(token) - 2);
+                    if (j == 1)
+                    {
+                        dt->date = text;
+                    }
+                    else if (j == 2)
+                    {
+                        dt->time = text;
+                    }
+                    else if (j == 3)
+                    {
+                        dt->text = text;
+                    }
+                }
+            }
+        }
+
+        token = strtok(NULL, ",");
+        j++;
+    }
+    free(string);
+    deleteDate(dt);
+    return dt;
 }
 
 Card *JSONtoCard(const char *str)
 {
-    return NULL;
+    if (str == NULL)
+    {
+        return NULL;
+    }
+    Card *theCard = malloc(sizeof(Card));
+    theCard->birthday = NULL;
+    theCard->anniversary = NULL;
+    theCard->optionalProperties = initializeList(&propertyToString, &deleteProperty, &compareProperties);
+
+    char *string = NULL;
+    if (str[0] == '{' && str[strlen(str) - 1] == '}')
+    {
+        string = substring((char *)str, 1, strlen((char *)str) - 2);
+    }
+    else
+    {
+        return NULL;
+    }
+
+    if (string == NULL)
+    {
+        return NULL;
+    }
+    
+    char *text = substring(string, 6, strlen(string) -2);
+
+    Property *prop = malloc(sizeof(Property));
+    prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
+    prop->values = initializeList(&valueToString, &deleteValue, &compareValues);
+
+    prop->group = malloc(2);
+    strcpy(prop->group, "");
+
+    prop->name = malloc(3);
+    strcpy(prop->name, "FN");
+
+    insertBack(prop->values, text);
+
+    theCard->fn = prop;
+    
+    deleteCard(theCard);
+    free(string);
+    return theCard;
 }
 
 void addProperty(Card *card, const Property *toBeAdded)
 {
+    if (card == NULL || card->optionalProperties == NULL || toBeAdded == NULL)
+    {
+        return;
+    }
+
+    insertBack(card->optionalProperties, (Property *)toBeAdded);
 }
 
 bool checkExist(char *name)
@@ -1346,12 +1600,8 @@ int main()
     Card *theCard = NULL;
     createCard("testCard.vcf", &theCard);
     // printf("%s \n", errorToString(validateCard(theCard)));
-    // Property *prop = theCard->optionalProperties->head->data;
-
-    char *test = "[\"Perreault\",\"Simon\"]";
-    // printf("%s \n", test);
-    JSONtoStrList(test);
-    // free(test);
+    char *test = "{\"FN\":\"Simon\"}";
+    JSONtoCard(test);
     // validateCard(theCard);
     deleteCard(theCard);
     return 0;
