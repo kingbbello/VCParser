@@ -1299,8 +1299,8 @@ Card *JSONtoCard(const char *str)
     {
         return NULL;
     }
-    
-    char *text = substring(string, 6, strlen(string) -2);
+
+    char *text = substring(string, 6, strlen(string) - 2);
 
     Property *prop = malloc(sizeof(Property));
     prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
@@ -1315,7 +1315,7 @@ Card *JSONtoCard(const char *str)
     insertBack(prop->values, text);
 
     theCard->fn = prop;
-    
+
     deleteCard(theCard);
     free(string);
     return theCard;
@@ -1369,6 +1369,24 @@ VCardErrorCode checkCardinality(Card *card)
             }
         }
     }
+    return OK;
+}
+
+VCardErrorCode checkPropCardinality(Property *prop)
+{
+    char *array[11] = {"KIND", "FN", "xml", "EMAIL", "LANG", "TZ", "TITLE", "ROLE", "NOTE", "PRODID", "REV"};
+
+    for (int i = 0; i < 11; i++)
+    {
+        if (compare(prop->name, array[i]) == 0)
+        {
+            if (prop->values->length != 1)
+            {
+                return INV_PROP;
+            }
+        }
+    }
+
     return OK;
 }
 
@@ -1447,10 +1465,8 @@ VCardErrorCode checkPid(Property *prop)
 
 VCardErrorCode checkProperty(Property *prop)
 {
-    // bool isGroup = false;
     if (compare("KIND", prop->name) == 0)
     {
-        // isGroup = strcmp(prop->values->head->data, "group") == 0 ? true : false;
         return checkKind(prop);
     }
     else if (compare("N", prop->name) == 0)
@@ -1491,7 +1507,7 @@ VCardErrorCode validateCard(const Card *obj)
             return INV_PROP;
         }
 
-        if (compare(property->name, "version") == 0)
+        if (compare(property->name, "version") == 0 || compare(property->name, "begin") == 0 || compare(property->name, "end") == 0)
         {
             return INV_CARD;
         }
@@ -1527,19 +1543,24 @@ VCardErrorCode validateCard(const Card *obj)
             return checkCardinality((Card *)obj);
         }
 
-        //checking each property for specifics
-        if (checkProperty(property) != OK)
+        if (checkPropCardinality(property) != OK)
         {
-            return checkProperty(property);
+            return checkPropCardinality(property);
         }
 
-        if (compare("MEMBER", property->name) == 0)
-        {
-            if (checkMember((Card *)obj) != OK)
-            {
-                return checkMember((Card *)obj);
-            }
-        }
+        //checking each property for specifics
+        // if (checkProperty(property) != OK)
+        // {
+        //     return checkProperty(property);
+        // }
+
+        // if (compare("MEMBER", property->name) == 0)
+        // {
+        //     if (checkMember((Card *)obj) != OK)
+        //     {
+        //         return checkMember((Card *)obj);
+        //     }
+        // }
     }
 
     if (obj->birthday != NULL)
@@ -1548,7 +1569,7 @@ VCardErrorCode validateCard(const Card *obj)
 
         if (bday->text == NULL || bday->time == NULL || bday->date == NULL)
         {
-            return INV_DT;
+            return INV_DT; 
         }
 
         if (bday->isText)
@@ -1594,15 +1615,20 @@ VCardErrorCode validateCard(const Card *obj)
     return OK;
 }
 
-int main()
-{
-    // printf("%s \n",errorToString(INV_CARD));
-    Card *theCard = NULL;
-    createCard("testCard.vcf", &theCard);
-    // printf("%s \n", errorToString(validateCard(theCard)));
-    char *test = "{\"FN\":\"Simon\"}";
-    JSONtoCard(test);
-    // validateCard(theCard);
-    deleteCard(theCard);
-    return 0;
-}
+// int main()
+// {
+//     // printf("%s \n",errorToString(INV_CARD));
+//     Card *theCard = NULL;
+//     createCard("testFiles/valid/testCard.vcf", &theCard);
+//     // writeCard("test.vcf", theCard);
+//     // // printf("%s \n", errorToString(validateCard(theCard)));
+//     // Property *prop = propToJSON(theCard->optionalProperties->head->data);
+//     Property *prop = theCard->optionalProperties->head->data;
+//     char *test = propToJSON(prop);
+//     Property *prop2 = JSONtoProp(test);
+//     deleteProperty(prop2);
+//     free(test);
+//     validateCard(theCard);
+//     deleteCard(theCard);
+//     return 0;
+// }

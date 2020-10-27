@@ -9,14 +9,14 @@ BIN = bin/
 PARSER_SRC_FILES = $(wildcard src/VC*.c)
 PARSER_OBJ_FILES = $(patsubst src/VC%.c,bin/VC%.o,$(PARSER_SRC_FILES))
 
-parser: $(BIN)libvcparser.so VCParser
+parser: $(BIN)libvcparser.so 
 
 
 VCParser: $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o VCParser $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
 
 $(BIN)libvcparser.so: $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
-	gcc -shared -o libvcparser.so $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o -lm
+	gcc -shared -o $(BIN)libvcparser.so $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o -lm
 
 #Compiles all files named VC*.c in src/ into object files, places all coresponding VC*.o files in bin/
 $(BIN)VC%.o: $(SRC)VC%.c $(INC)LinkedListAPI.h $(INC)VC*.h
