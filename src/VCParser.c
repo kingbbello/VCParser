@@ -1615,20 +1615,20 @@ VCardErrorCode validateCard(const Card *obj)
     return OK;
 }
 
-// int main()
-// {
-//     // printf("%s \n",errorToString(INV_CARD));
-//     Card *theCard = NULL;
-//     createCard("testFiles/valid/testCard.vcf", &theCard);
-//     // writeCard("test.vcf", theCard);
-//     // // printf("%s \n", errorToString(validateCard(theCard)));
-//     // Property *prop = propToJSON(theCard->optionalProperties->head->data);
-//     Property *prop = theCard->optionalProperties->head->data;
-//     char *test = propToJSON(prop);
-//     Property *prop2 = JSONtoProp(test);
-//     deleteProperty(prop2);
-//     free(test);
-//     validateCard(theCard);
-//     deleteCard(theCard);
-//     return 0;
-// }
+int main()
+{
+    // printf("%s \n",errorToString(INV_CARD));
+    Card *theCard = NULL;
+    createCard("testFiles/valid/testCard.vcf", &theCard);
+    // writeCard("test.vcf", theCard);
+    // // printf("%s \n", errorToString(validateCard(theCard)));
+    // Property *prop = propToJSON(theCard->optionalProperties->head->data);
+    Property *prop = theCard->optionalProperties->head->data;
+    char *test = propToJSON(prop);
+    Property *prop2 = JSONtoProp(test);
+    deleteProperty(prop2);
+    free(test);
+    validateCard(theCard);
+    deleteCard(theCard);
+    return 0;
+}
