@@ -63,10 +63,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-.vscode/
+.vscode
 *.vcf
 VCParser
 test1pre
 test2pre
 testfiles/
 studentOutput/
+node_modules
