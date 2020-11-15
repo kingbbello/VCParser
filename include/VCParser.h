@@ -125,105 +125,28 @@ char* dateToString(void* toBePrinted);
 // **************************************************************************
 
 
-// ************* Assignment 2 functions - MUST be implemented ***************
 
-/** Function to writing a Card object into a file in iCard format.
- *@pre Card object exists, and is not NULL.
-        fileName is not NULL, has the correct extension
- *@post Card has not been modified in any way, and a file representing the
-        Card contents in vCard format has been created
- *@return the error code indicating success or the error encountered when traversing the Card
- *@param obj - a pointer to a Card struct
-		 fileName - the name of the output file
- **/
+
 VCardErrorCode writeCard(const char* fileName, const Card* obj);
 
-
-
-/** Function to writing a Card object into a file in iCard format.
- *@pre Card object exists, and is not NULL.
- *@post Card has not been modified in any way, and a file representing the
-        Card contents in vCard format has been created
- *@return the error code indicating success or the error encountered when validating the Card
- *@param obj - a pointer to a Card struct
- **/
 VCardErrorCode validateCard(const Card* obj);
 
-
-/** Function for converting a list of strings into a JSON string
- *@pre List exists, is not null, and is valid
- *@post List has not been modified in any way, and a JSON string has been created
- *@return newly allocated JSON string.  May be NULL.
- *@param strList - a pointer to an Individual struct
- **/
 char* strListToJSON(const List* strList);
 
-
-/** Function for creating an List of strings from an JSON string
- *@pre String is not null, and is valid
- *@post String has not been modified in any way, and a List has been created
- *@return a newly allocated List.  May be NULL.
- *@param str - a pointer to a JSON string
- **/
 List* JSONtoStrList(const char* str);
 
-
-/** Function for converting a Property struct into a JSON string
- *@pre Property exists, is not null, and is valid
- *@post Property has not been modified in any way, and a JSON string has been created
- *@return newly allocated JSON string.  May be NULL.
- *@param strList - a pointer to a Property struct
- **/
 char* propToJSON(const Property* prop);
 
-
-/** Function for creating a Property struct from an JSON string
- *@pre String is not null, and is valid
- *@post String has not been modified in any way, and a Property struct has been created
- *@return a newly allocated Property.  May be NULL.
- *@param str - a pointer to a JSON string
- **/
 Property* JSONtoProp(const char* str);
 
-
-/** Function for converting a DateTime struct into a JSON string
- *@pre DateTime exists, is not null, and is valid
- *@post DateTime has not been modified in any way, and a JSON string has been created
- *@return newly allocated JSON string.  May be NULL.
- *@param strList - a pointer to a DateTime struct
- **/
 char* dtToJSON(const DateTime* prop);
 
-
-/** Function for creating a DateTime struct from an JSON string
- *@pre String is not null, and is valid
- *@post String has not been modified in any way, and a DateTime struct has been created
- *@return a newly allocated DateTime.  May be NULL.
- *@param str - a pointer to a JSON string
- **/
 DateTime* JSONtoDT(const char* str);
 
-
-/** Function for creating a Card struct from an JSON string
- *@pre String is not null, and is valid
- *@post String has not been modified in any way, and a Card struct has been created
- *@return a newly allocated Card.  May be NULL.
- *@param str - a pointer to a JSON string
- **/
 Card* JSONtoCard(const char* str);
 
-
-/** Function for adding an optional Property to a Card object
- *@pre both arguments are not NULL and valid
- *@post Property has not been modified in any way, and its address had been added to 
- *      Card's optionalProperties list
- *@return void
- *@param obj - a pointer to a Card struct
- *@param toBeAdded - a pointer to an Property struct
-**/
 void addProperty(Card* card, const Property* toBeAdded);
 
-// *************************************************************************
 
 
 #endif	

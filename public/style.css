@@ -20,9 +20,49 @@ a:link:hover {
     cursor: pointer;
     cursor: hand;
 }
-input[type=submit], button {
+input[type=submit], button, h1 {
     cursor: pointer;
     cursor: hand;
+}
+
+.my-custom-scrollbar {
+    position: relative;
+    /* height: 330px; */
+    max-width: 600px;
+    margin: 0 auto;
+    overflow: auto;
+    overflow: scroll;
+}
+
+.my-custom-scrollbar2 {
+    position: relative;
+    /* height: 620px; */
+    max-width: 600px;
+    margin: 0 auto;
+    overflow: auto;
+    overflow: scroll;
+}
+
+.scrollable-menu {
+    height: auto;
+    max-height: 100px;
+    overflow-x: hidden;
+}
+
+.table-wrapper-scroll-y {
+    display: block;
+}
+
+td {
+    text-align: center;
+}
+
+th {
+    text-align: center;
+}
+
+#cardView {
+    margin-top: 50px;
 }
 @media(max-width: 900px) {
     html {

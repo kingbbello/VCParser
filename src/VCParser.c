@@ -1615,11 +1615,149 @@ VCardErrorCode validateCard(const Card *obj)
     return OK;
 }
 
+char *getFN(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    char *tempStr;
+    tempStr = malloc(strlen(card->fn->values->head->data));
+    strcpy(tempStr, card->fn->values->head->data);
+
+    return tempStr;
+}
+
+int getPropLen(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return -1;
+    }
+    return card->optionalProperties->length;
+}
+
+char *getPropNames(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    List *strList = (List*)card->optionalProperties;
+    insertFront(strList, card->fn);
+    Property *prop;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((prop = nextElement(&iter)) != NULL)
+    {
+        char *value = prop->name;
+        len += strlen(value) + 3;
+        tempStr = realloc(tempStr, len);
+        strcat(tempStr, "\"");
+        strcat(tempStr, value);
+        strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
+}
+
+char *getPropValues(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    List *strList = (List*)card->optionalProperties;
+    insertFront(strList, card->fn);
+    Property *prop;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((prop = nextElement(&iter)) != NULL)
+    {
+        char *value = strListToJSON(prop->values);
+        len += strlen(value) + 3;
+        tempStr = realloc(tempStr, len);
+        // strcat(tempStr, "\"");
+        strcat(tempStr, value);
+        // strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
+}
+
+char *paramLen(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    List *strList = (List*)card->optionalProperties;
+    insertFront(strList, card->fn);
+    Property *prop;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((prop = nextElement(&iter)) != NULL)
+    {
+        int val = prop->parameters->length;
+        char *value = malloc(3);
+        sprintf(value, "%d", val);
+        len += strlen(value) + 3;
+        tempStr = realloc(tempStr, len);
+        // strcat(tempStr, "\"");
+        strcat(tempStr, value);
+        // strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
+}
+
 int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
-    createCard("testFiles/valid/testCard.vcf", &theCard);
+    createCard("uploads/testCard.vcf", &theCard);
+    printf("%s \n", paramLen("uploads/testCard.vcf"));
     // writeCard("test.vcf", theCard);
     // // printf("%s \n", errorToString(validateCard(theCard)));
     // Property *prop = propToJSON(theCard->optionalProperties->head->data);
