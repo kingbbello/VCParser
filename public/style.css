@@ -39,8 +39,8 @@ input[type=submit], button, h1 {
     /* height: 620px; */
     max-width: 600px;
     margin: 0 auto;
-    overflow: auto;
-    overflow: scroll;
+    /* overflow: auto; */
+    /* overflow: scroll; */
 }
 
 .scrollable-menu {

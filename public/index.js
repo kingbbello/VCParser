@@ -107,11 +107,78 @@ $(document).ready(function () {
         let propNames = data.names;
         let values = data.values;
         let paramLengths = data.paramLengths;
+        let bday = data.bday;
+        let ann = data.ann;
 
-        if(propNames.length > 10){
-          $('.my-custom-scrollbar2').css('height', '620px')
-        }else{
+        let bdayRow = "";
+        let annRow = "";
+        
+        if(bday !== "NULL"){
+          let value = "";
+          if(bday.isText){
+            value += bday.text
+          }else{
+            if(bday.date.length > 0){
+              value += '<div>Date: ' + bday.date + '</div>'
+            }
+
+            if(bday.time.length > 0){
+              value += '</div>Time: ' + bday.time + ' '
+
+              if(bday.isUTC){
+                value += "(UTC)"
+              }
+
+              value += "</div>"
+            }
+          }
+
+          bdayRow += "<tr>"
+
+          bdayRow += '<td>' + (propNames.length+1) + '</td>'
+          bdayRow += '<td> BDAY </td>'
+          bdayRow += '<td>' + value + '</td>'
+          bdayRow += '<td> 0 </td>'
+
+          bdayRow += "<tr>"
+        }
+
+        if(ann !== "NULL"){
+          let value = "";
+          if(ann.isText){
+            value += ann.text
+          }else{
+            if(ann.date.length > 0){
+              value += '<div>Date: ' + ann.date + '</div>'
+            }
+
+            if(ann.time.length > 0){
+              value += '<div>Time: ' + ann.time
+              if(ann.isUTC){
+                value += "(UTC)"
+              }
+              value += '</div>'
+            }
+          }
+          let len = bdayRow.length > 0 ? 2 : 1;
+          annRow += "<tr>"
+
+          annRow += '<td>' + (propNames.length + len) + '</td>'
+          annRow += '<td> ANN </td>'
+          annRow += '<td>' + value + '</td>'
+          annRow += '<td> 0 </td>'
+
+          annRow += "<tr>"
+        }
+
+        console.log(ann)
+
+        if(propNames.length < 10){
           $('.my-custom-scrollbar2').css('height', '150px')
+        }else{
+          $('.my-custom-scrollbar2').css('height', '620px')
+          $('.my-custom-scrollbar2').css('overflow', 'auto')
+          $('.my-custom-scrollbar2').css('overflow', 'scroll')
         }
         
         for(let i = 0; i < propNames.length; i++){
@@ -124,6 +191,12 @@ $(document).ready(function () {
 
           row += '</tr>'
           $('#propBody').append(row)
+        }
+        if(bdayRow.length > 0){
+          $('#propBody').append(bdayRow)
+        }
+        if(annRow.length > 0){
+          $('#propBody').append(annRow)
         }
       }
     })

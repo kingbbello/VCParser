@@ -803,10 +803,6 @@ char *dateToString(void *date)
     return tempStr;
 }
 
-// void function(int *a){
-//     (*a)++;
-// }
-
 VCardErrorCode writeCard(const char *fileName, const Card *obj)
 {
 
@@ -1270,7 +1266,7 @@ DateTime *JSONtoDT(const char *str)
         j++;
     }
     free(string);
-    deleteDate(dt);
+    // deleteDate(dt);
     return dt;
 }
 
@@ -1636,7 +1632,16 @@ int getPropLen(char *cardString){
     if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
         return -1;
     }
-    return card->optionalProperties->length;
+    int len = 0;
+    if(card->birthday != NULL){
+        len++;
+    }
+
+    if(card->anniversary != NULL){
+        len++;
+    }
+
+    return card->optionalProperties->length + len;
 }
 
 char *getPropNames(char *cardString){
@@ -1752,12 +1757,39 @@ char *paramLen(char *cardString){
     return tempStr;
 }
 
+char *getBDAY(char * string){
+    Card *card = NULL;
+    createCard(string, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    return dtToJSON(card->birthday);
+}
+
+char *getAnn(char * string){
+    Card *card = NULL;
+    createCard(string, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    return dtToJSON(card->anniversary);
+}
+
+VCardErrorCode validateCardII(char *filename){
+    Card *card = NULL;
+    return createCard(filename, &card);
+}
+
 int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
     createCard("uploads/testCard.vcf", &theCard);
-    printf("%s \n", paramLen("uploads/testCard.vcf"));
+    printf("%s \n", getAnn("uploads/testCard-Ann.vcf"));
     // writeCard("test.vcf", theCard);
     // // printf("%s \n", errorToString(validateCard(theCard)));
     // Property *prop = propToJSON(theCard->optionalProperties->head->data);

@@ -16,6 +16,9 @@ let sharedLib = ffi.Library('./libvcparser.so', {
   'getPropNames' :["string", ["string"]],
   'getPropValues' :["string", ["string"]],
   'paramLen' :["string", ["string"]],
+  'validateCardII' : ['int', ['string']],
+  'getBDAY' :["string", ["string"]],
+  'getAnn' :["string", ["string"]],
 })
 
 
@@ -110,7 +113,7 @@ app.get("/getFiles", function (req, res) {
 
   fs.readdir("uploads/", (err, files) => {
     files.forEach((file) => {
-      if (checkExtension(file)) {
+      if (checkExtension(file) && sharedLib.validateCardII("uploads/"+file) === 0) {
         array.push(file);
         names.push(sharedLib.getFN("uploads/" + file));
         lengths.push(sharedLib.getPropLen("uploads/" + file));
@@ -141,11 +144,13 @@ app.get("/properties", function(req, res){
   JSON.parse(sharedLib.paramLen("uploads/" + filename)).forEach((length)=>{
     lenArray.push(length);
   })
-  console.log(lenArray);
+
   res.send({
     names : namesArray,
     values : valArray,
-    paramLengths : lenArray
+    paramLengths : lenArray,
+    bday : sharedLib.getBDAY("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getBDAY("uploads/" + filename)) : "NULL",
+    ann : sharedLib.getAnn("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getAnn("uploads/" + filename)) : "NULL",
   })
 })
 
