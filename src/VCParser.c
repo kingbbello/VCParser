@@ -107,6 +107,10 @@ char *trim2(char *str)
     int i;
     const char *seps = "]\"";
 
+    if(str[0] == '\"'){
+        memmove(str, str+1, strlen(str));
+    }
+
     i = strlen(str) - 1;
     while (i >= 0 && strchr(seps, str[i]) != NULL)
     {
@@ -968,6 +972,23 @@ VCardErrorCode writeCard(const char *fileName, const Card *obj)
     return OK;
 }
 
+char *paramToJSON(Parameter *param){
+    if(param == NULL){
+        char *ret = malloc(2);
+        strcpy(ret, "");
+        return ret;
+    }
+
+    char *tempStr;
+    
+    int len = 50 + strlen(param->name) + strlen(param->value);
+    tempStr = malloc(len);
+
+    sprintf(tempStr, "%s = %s", param->name, trim2(param->value));
+    // printf("%s \n\n", trim2(param->value));
+    return tempStr;
+}
+
 char *strListToJSON(const List *strList)
 {
     if (strList == NULL)
@@ -996,6 +1017,47 @@ char *strListToJSON(const List *strList)
         tempStr = realloc(tempStr, len);
         strcat(tempStr, "\"");
         strcat(tempStr, value);
+        strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
+}
+
+char *paramListToJSON(const List *strList)
+{
+    if (strList == NULL)
+    {
+        return NULL;
+    }
+
+    if (strList->length == 0)
+    {
+        char *ret = malloc(3);
+        strcpy(ret, "[]");
+        return ret;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    Parameter *value;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((value = nextElement(&iter)) != NULL)
+    {
+        char *val = paramToJSON(value);
+        len += strlen(val) + 3;
+        tempStr = realloc(tempStr, len);
+        strcat(tempStr, "\"");
+        strcat(tempStr, val);
         strcat(tempStr, "\"");
 
         if (++count != strList->length)
@@ -1063,6 +1125,7 @@ char *propToJSON(const Property *prop)
     free(values);
     return tempStr;
 }
+
 
 Property *JSONtoProp(const char *str)
 {
@@ -1312,7 +1375,7 @@ Card *JSONtoCard(const char *str)
 
     theCard->fn = prop;
 
-    deleteCard(theCard);
+    
     free(string);
     return theCard;
 }
@@ -1545,18 +1608,18 @@ VCardErrorCode validateCard(const Card *obj)
         }
 
         //checking each property for specifics
-        // if (checkProperty(property) != OK)
-        // {
-        //     return checkProperty(property);
-        // }
+        if (checkProperty(property) != OK)
+        {
+            return checkProperty(property);
+        }
 
-        // if (compare("MEMBER", property->name) == 0)
-        // {
-        //     if (checkMember((Card *)obj) != OK)
-        //     {
-        //         return checkMember((Card *)obj);
-        //     }
-        // }
+        if (compare("MEMBER", property->name) == 0)
+        {
+            if (checkMember((Card *)obj) != OK)
+            {
+                return checkMember((Card *)obj);
+            }
+        }
     }
 
     if (obj->birthday != NULL)
@@ -1718,6 +1781,43 @@ char *getPropValues(char *cardString){
     return tempStr;
 }
 
+char *getParamValues(char *cardString){
+    Card *card = NULL;
+    createCard(cardString, &card);
+
+    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+        return NULL;
+    }
+
+    char *tempStr;
+    int len = 3;
+    tempStr = malloc(len);
+
+    List *strList = (List*)card->optionalProperties;
+    insertFront(strList, card->fn);
+    Property *prop;
+    strcpy(tempStr, "[");
+    ListIterator iter = createIterator((List *)strList);
+    int count = 0;
+    while ((prop = nextElement(&iter)) != NULL)
+    {
+        char *value = paramListToJSON(prop->parameters);
+        len += strlen(value) + 3;
+        tempStr = realloc(tempStr, len);
+        // strcat(tempStr, "\"");
+        strcat(tempStr, value);
+        // strcat(tempStr, "\"");
+
+        if (++count != strList->length)
+        {
+            strcat(tempStr, ",");
+        }
+    }
+    strcat(tempStr, "]");
+
+    return tempStr;
+}
+
 char *paramLen(char *cardString){
     Card *card = NULL;
     createCard(cardString, &card);
@@ -1775,7 +1875,7 @@ char *getAnn(char * string){
     if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
         return NULL;
     }
-
+    
     return dtToJSON(card->anniversary);
 }
 
@@ -1784,20 +1884,59 @@ VCardErrorCode validateCardII(char *filename){
     return createCard(filename, &card);
 }
 
+VCardErrorCode createNewCard(char*filename, char *value, int indexToDelete){
+    Card *card = NULL;
+    VCardErrorCode code = OK;
+    code = createCard(filename, &card);
+
+    if(code != OK){
+        return code;
+    }
+
+    Node *prop = card->optionalProperties->head;
+    for(int i = 0; i < indexToDelete; i++){
+        prop = prop->next;
+    }
+
+    Property *property = prop->data;
+    property->values = initializeList(valueToString, deleteValue, compareValues);
+    char *string = malloc(strlen(value));
+
+    strcpy(string, value);
+    insertBack(property->values, string);
+
+    code = validateCard(card);
+    if(code != OK){
+        return code;
+    }
+    
+   code = writeCard(filename, card);
+    if(code != OK){
+        return code;
+    }
+
+    return OK;
+}
+
+VCardErrorCode uploadCard(const char *string, char *filename){
+    const Card *card = JSONtoCard(string);
+    VCardErrorCode code = writeCard(filename, card);
+    return code;
+}
+
 int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
     createCard("uploads/testCard.vcf", &theCard);
-    printf("%s \n", getAnn("uploads/testCard-Ann.vcf"));
-    // writeCard("test.vcf", theCard);
-    // // printf("%s \n", errorToString(validateCard(theCard)));
-    // Property *prop = propToJSON(theCard->optionalProperties->head->data);
+    // printf("%s \n", getParamValues("uploads/testCard.vcf"));
+
+    // createNewCard("uploads/testCard.vcf", "M", 2);
+    uploadCard("{\"FN\":\"w\"}", "uploads/s.vcf");
     Property *prop = theCard->optionalProperties->head->data;
-    char *test = propToJSON(prop);
-    Property *prop2 = JSONtoProp(test);
-    deleteProperty(prop2);
-    free(test);
+    Parameter *param = prop->parameters->head->data;
+    // printf("%s \n", paramToJSON(param));
+
     validateCard(theCard);
     deleteCard(theCard);
     return 0;

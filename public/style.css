@@ -36,7 +36,7 @@ input[type=submit], button, h1 {
 
 .my-custom-scrollbar2 {
     position: relative;
-    /* height: 620px; */
+    height: 620px;
     max-width: 600px;
     margin: 0 auto;
     /* overflow: auto; */
@@ -64,6 +64,11 @@ th {
 #cardView {
     margin-top: 50px;
 }
+
+#createCard {
+    margin-top: 50px;
+}
+
 @media(max-width: 900px) {
     html {
         font-size: 14px !important;

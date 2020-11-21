@@ -8,6 +8,7 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fileUpload = require("express-fileupload");
+const bodyParser = require('body-parser');
 
 let sharedLib = ffi.Library('./libvcparser.so', {
   'createCard' :["int",['string', 'pointer']],
@@ -19,9 +20,12 @@ let sharedLib = ffi.Library('./libvcparser.so', {
   'validateCardII' : ['int', ['string']],
   'getBDAY' :["string", ["string"]],
   'getAnn' :["string", ["string"]],
+  'getParamValues' :["string", ["string"]],
+  'createNewCard' :["int", ["string", "string", "int"]],
+  'uploadCard' :["int", ["string", "string"]],
 })
 
-
+app.use(bodyParser.urlencoded({extended: true}))
 app.use(fileUpload());
 app.use(express.static(path.join(__dirname + "/uploads")));
 
@@ -131,6 +135,7 @@ app.get("/properties", function(req, res){
   const namesArray = [];
   const valArray = [];
   const lenArray = [];
+  const paramArray = [];
 
   let filename = req.query.fname;
   JSON.parse(sharedLib.getPropNames("uploads/" + filename)).forEach((name)=>{
@@ -145,12 +150,46 @@ app.get("/properties", function(req, res){
     lenArray.push(length);
   })
 
+  JSON.parse(sharedLib.getParamValues("uploads/" + filename)).forEach((param)=>{
+    paramArray.push(param);
+  })
+
   res.send({
     names : namesArray,
     values : valArray,
     paramLengths : lenArray,
+    param : paramArray,
     bday : sharedLib.getBDAY("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getBDAY("uploads/" + filename)) : "NULL",
     ann : sharedLib.getAnn("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getAnn("uploads/" + filename)) : "NULL",
+  })
+})
+
+app.get('/changeValues', function(req, res){
+  let stat = sharedLib.createNewCard("uploads/"+req.query.filename, req.query.value, req.query.index);
+
+  res.send({
+    act : stat
+  })
+})
+
+app.get('/verify', function(req, res){
+  let filename = req.query.name;
+  let stat = sharedLib.validateCardII('uploads/' + filename)
+
+  res.send({
+    stat : stat
+  })
+})
+
+app.post('/customCard', function(req, res){
+  let filename = req.body.filename;
+  let value = req.body.value;
+  
+  let fn = {FN:value}
+  sharedLib.uploadCard(JSON.stringify(fn), 'uploads/' + filename)
+
+  res.send({
+    data : "hello"
   })
 })
 

@@ -1,6 +1,5 @@
 // Put all onload AJAX calls here, and event listeners
 $(document).ready(function () {
-  $('[data-toggle="popover"]').popover({trigger: "hover"}); 
   
   $("#fileLog").click(function () {
     $("#first").slideToggle("slow");
@@ -10,27 +9,49 @@ $(document).ready(function () {
     $("#second").slideToggle("slow");
   });
 
+  $("#createCard").click(function () {
+    $("#createCardForm").slideToggle("slow");
+  });
+  
   $("#upload_button").on("click", function (event) {
     event.preventDefault();
     let file = $("#upload_filename")[0].files[0];
     let data = new FormData();
     data.append("uploadFile", file);
 
+    let set;
+    
     $.ajax({
-      type: "post", //Request type
-      url: "/upload", //The server endpoint we are connecting to
-      data: data,
-      contentType: false,
-      processData: false,
-      success: function(){
-        let text = $('#upload_filename').val()
-        console.log(text)
-        alert(text + " has been uploaded")
-      },
-      failure: function(){
-        alert("File failed to upload")
+      type : 'get',
+      url : '/verify',
+      datatype : 'json',
+      data : {name : file.name},
+      success : function(data){
+        set = data.stat
       }
-    });
+    })
+
+    if(set === 0){
+      $.ajax({
+        type: "post", //Request type
+        url: "/upload", //The server endpoint we are connecting to
+        data: data,
+        contentType: false,
+        processData: false,
+        success: function(){
+          let text = $('#upload_filename').val()
+          console.log(text)
+          alert(text + " has been uploaded")
+          location.reload()
+        },
+        failure: function(){
+          alert("File failed to upload")
+        }
+      });
+    }else{
+      alert('An error occured! File has not been saved to server')
+    }
+    
     // location.reload();
   });
 
@@ -89,17 +110,37 @@ $(document).ready(function () {
     });
   });
 
+  $('#createCustomCard').click(function(event){
+    event.preventDefault();
+    if($('#validationFileName')[0].value.length > 0 && $('#fnValue')[0].value.length > 0){
+      $.ajax({
+        type : 'post',
+        datatype : 'json',
+        url : '/customCard', 
+        data : {filename : $('#validationFileName')[0].value + '.vcf', value : $('#fnValue')[0].value},
+        success : function(data){
+          // alert('File has been successfully uploaded')
+        },
+        fail : function(){
+          alert("An error occurred")
+        }
+      })
+    }else{
+      alert('Please fill the filename and fullname fields')
+    }
+  })
+
 
 
   //Functions get called here
   function funct(filename){
-    
     $.ajax({
       type : 'get',
       datatype : 'json',
       url : '/properties', 
       data : {fname : filename},
       success : function(data){
+        
         if($('#propBody').children().length > 0){
           $('#propBody').children().empty()
         }
@@ -109,6 +150,8 @@ $(document).ready(function () {
         let paramLengths = data.paramLengths;
         let bday = data.bday;
         let ann = data.ann;
+        let param = data.param;
+
 
         let bdayRow = "";
         let annRow = "";
@@ -171,10 +214,10 @@ $(document).ready(function () {
           annRow += "<tr>"
         }
 
-        console.log(ann)
 
         if(propNames.length < 10){
-          $('.my-custom-scrollbar2').css('height', '150px')
+          $('.my-custom-scrollbar2').css('height', '600px')
+          // $('.my-custom-scrollbar2').css('overflow', 'hidden')
         }else{
           $('.my-custom-scrollbar2').css('height', '620px')
           $('.my-custom-scrollbar2').css('overflow', 'auto')
@@ -184,11 +227,19 @@ $(document).ready(function () {
         for(let i = 0; i < propNames.length; i++){
           let row = '<tr>'
 
+          let paramString = ''
+          param[i].forEach(param =>{
+            paramString += '{' + param + '} '
+          })
+
+          let map = values[i].map(val=> ' ' + val)
+
+          console.log(values[i])
           row += '<td>' + (i+1) + '</td>'
           row += '<td>' + propNames[i] + '</td>'
-          row += '<td style="width: 100%; white-space:nowrap">' + values[i].filter((v)=>v.length>0) + '</td>'
-          row += '<td data-toggle="popover" data-content = ' + '>' + paramLengths[i] + '</td>'
-
+          row += '<td style="width: 100%; white-space:nowrap" onclick='+ `"change('${filename}', ${i}, ${values[i].length})"` +'>' + map.filter((v)=>v.length>1) + '</td>'
+          row += '<td id="popover4" data-content="' + paramString +'" data-toggle="popover">' + paramLengths[i] + '</td>'
+          
           row += '</tr>'
           $('#propBody').append(row)
         }
@@ -198,9 +249,31 @@ $(document).ready(function () {
         if(annRow.length > 0){
           $('#propBody').append(annRow)
         }
+        $('[data-toggle="popover"]').popover({trigger: "hover"}); 
       }
     })
   }
 });
 
+function change(filename, index, size){
+  if(size === 1 && index > 0){
+    let value = prompt("Please enter a new value")
 
+    if(value !== null){
+      $.ajax({
+        type : 'get',
+        datatype : 'json',
+        url : '/changeValues', 
+        data : {filename : filename, index : index-1, value : value},
+        success : function(data){
+          if(data.act === 0){
+            alert("Successfully changed Value");
+            location.reload();
+          }else{
+            alert("Sorry! You've entered an invalid value")
+          }
+        }
+      })
+    }
+  }
+}

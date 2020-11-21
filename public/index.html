@@ -30,7 +30,7 @@
             <h1 class="display-4" style="text-align: center;">vCard Viewer</h1>
         </div>
     </div>
-    <h1 style="text-align: center" id="fileLog">File Log Panel</h1>
+    <h1 style="text-align: center" id="fileLog" >File Log Panel</h1>
     <div id="first">
         <div id="filelogDiv" class="table-wrapper-scroll-y my-custom-scrollbar">
             <table id="filelogTable" class="table table-bordered" style="table-layout: fixed;">
@@ -82,8 +82,48 @@
 
                     </tbody>
                 </table>
+                <!-- The Modal -->
+                <div id="myModal" class="modal">
+
+                    <!-- Modal content -->
+                    <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>Some text in the Modal..</p>
+                    </div>
+                
+                </div>
             </div>
         </div>
+    </div>
+
+    <h1 style="text-align: center" id="createCard">Create Custom vCard</h1>
+    <div id="createCardForm">
+        <div class="form-row">
+          <div class="col-md-6 mb-3">
+            <label for="validationDefaultUsername">Filename</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="validationFileName" placeholder="Filename" aria-describedby="inputGroupPrepend2" required>
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroupPrepend2">.vcf</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-md-6 mb-3">
+            <label for="validationDefault03">FullName</label>
+            <input type="text" class="form-control" id="fnValue" placeholder="full name" required>
+          </div>
+          <!-- <div class="col-md-3 mb-3">
+            <label for="validationDefault04">State</label>
+            <input type="text" class="form-control" id="validationDefault04" placeholder="State" required>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="validationDefault05">Zip</label>
+            <input type="text" class="form-control" id="validationDefault05" placeholder="Zip" required>
+          </div> -->
+        </div>
+        <button id="createCustomCard" class="btn btn-primary" type="submit">Submit form</button>
     </div>
     <script src="/index.js"></script>
 </body>
