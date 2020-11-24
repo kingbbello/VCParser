@@ -107,8 +107,9 @@ char *trim2(char *str)
     int i;
     const char *seps = "]\"";
 
-    if(str[0] == '\"'){
-        memmove(str, str+1, strlen(str));
+    if (str[0] == '\"')
+    {
+        memmove(str, str + 1, strlen(str));
     }
 
     i = strlen(str) - 1;
@@ -972,15 +973,17 @@ VCardErrorCode writeCard(const char *fileName, const Card *obj)
     return OK;
 }
 
-char *paramToJSON(Parameter *param){
-    if(param == NULL){
+char *paramToJSON(Parameter *param)
+{
+    if (param == NULL)
+    {
         char *ret = malloc(2);
         strcpy(ret, "");
         return ret;
     }
 
     char *tempStr;
-    
+
     int len = 50 + strlen(param->name) + strlen(param->value);
     tempStr = malloc(len);
 
@@ -1125,7 +1128,6 @@ char *propToJSON(const Property *prop)
     free(values);
     return tempStr;
 }
-
 
 Property *JSONtoProp(const char *str)
 {
@@ -1375,7 +1377,6 @@ Card *JSONtoCard(const char *str)
 
     theCard->fn = prop;
 
-    
     free(string);
     return theCard;
 }
@@ -1628,7 +1629,7 @@ VCardErrorCode validateCard(const Card *obj)
 
         if (bday->text == NULL || bday->time == NULL || bday->date == NULL)
         {
-            return INV_DT; 
+            return INV_DT;
         }
 
         if (bday->isText)
@@ -1674,11 +1675,13 @@ VCardErrorCode validateCard(const Card *obj)
     return OK;
 }
 
-char *getFN(char *cardString){
+char *getFN(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
@@ -1689,29 +1692,35 @@ char *getFN(char *cardString){
     return tempStr;
 }
 
-int getPropLen(char *cardString){
+int getPropLen(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return -1;
     }
     int len = 0;
-    if(card->birthday != NULL){
+    if (card->birthday != NULL)
+    {
         len++;
     }
 
-    if(card->anniversary != NULL){
+    if (card->anniversary != NULL)
+    {
         len++;
     }
 
     return card->optionalProperties->length + len;
 }
 
-char *getPropNames(char *cardString){
+char *getPropNames(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
@@ -1719,7 +1728,7 @@ char *getPropNames(char *cardString){
     int len = 3;
     tempStr = malloc(len);
 
-    List *strList = (List*)card->optionalProperties;
+    List *strList = (List *)card->optionalProperties;
     insertFront(strList, card->fn);
     Property *prop;
     strcpy(tempStr, "[");
@@ -1744,11 +1753,13 @@ char *getPropNames(char *cardString){
     return tempStr;
 }
 
-char *getPropValues(char *cardString){
+char *getPropValues(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
@@ -1756,7 +1767,7 @@ char *getPropValues(char *cardString){
     int len = 3;
     tempStr = malloc(len);
 
-    List *strList = (List*)card->optionalProperties;
+    List *strList = (List *)card->optionalProperties;
     insertFront(strList, card->fn);
     Property *prop;
     strcpy(tempStr, "[");
@@ -1781,11 +1792,13 @@ char *getPropValues(char *cardString){
     return tempStr;
 }
 
-char *getParamValues(char *cardString){
+char *getParamValues(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
@@ -1793,7 +1806,7 @@ char *getParamValues(char *cardString){
     int len = 3;
     tempStr = malloc(len);
 
-    List *strList = (List*)card->optionalProperties;
+    List *strList = (List *)card->optionalProperties;
     insertFront(strList, card->fn);
     Property *prop;
     strcpy(tempStr, "[");
@@ -1818,11 +1831,13 @@ char *getParamValues(char *cardString){
     return tempStr;
 }
 
-char *paramLen(char *cardString){
+char *paramLen(char *cardString)
+{
     Card *card = NULL;
     createCard(cardString, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
@@ -1830,7 +1845,7 @@ char *paramLen(char *cardString){
     int len = 3;
     tempStr = malloc(len);
 
-    List *strList = (List*)card->optionalProperties;
+    List *strList = (List *)card->optionalProperties;
     insertFront(strList, card->fn);
     Property *prop;
     strcpy(tempStr, "[");
@@ -1857,44 +1872,52 @@ char *paramLen(char *cardString){
     return tempStr;
 }
 
-char *getBDAY(char * string){
+char *getBDAY(char *string)
+{
     Card *card = NULL;
     createCard(string, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
 
     return dtToJSON(card->birthday);
 }
 
-char *getAnn(char * string){
+char *getAnn(char *string)
+{
     Card *card = NULL;
     createCard(string, &card);
 
-    if(card == NULL || card->fn == NULL || card->optionalProperties == NULL){
+    if (card == NULL || card->fn == NULL || card->optionalProperties == NULL)
+    {
         return NULL;
     }
-    
+
     return dtToJSON(card->anniversary);
 }
 
-VCardErrorCode validateCardII(char *filename){
+VCardErrorCode validateCardII(char *filename)
+{
     Card *card = NULL;
     return createCard(filename, &card);
 }
 
-VCardErrorCode createNewCard(char*filename, char *value, int indexToDelete){
+VCardErrorCode createNewCard(char *filename, char *value, int indexToDelete)
+{
     Card *card = NULL;
     VCardErrorCode code = OK;
     code = createCard(filename, &card);
 
-    if(code != OK){
+    if (code != OK)
+    {
         return code;
     }
 
     Node *prop = card->optionalProperties->head;
-    for(int i = 0; i < indexToDelete; i++){
+    for (int i = 0; i < indexToDelete; i++)
+    {
         prop = prop->next;
     }
 
@@ -1906,35 +1929,97 @@ VCardErrorCode createNewCard(char*filename, char *value, int indexToDelete){
     insertBack(property->values, string);
 
     code = validateCard(card);
-    if(code != OK){
+    if (code != OK)
+    {
         return code;
     }
-    
-   code = writeCard(filename, card);
-    if(code != OK){
+
+    code = writeCard(filename, card);
+    if (code != OK)
+    {
         return code;
     }
 
     return OK;
 }
 
-VCardErrorCode uploadCard(const char *string, char *filename){
+VCardErrorCode uploadCard(const char *string, char *filename)
+{
     const Card *card = JSONtoCard(string);
     VCardErrorCode code = writeCard(filename, card);
     return code;
+}
+
+VCardErrorCode addPropToCard(char *filename, char *name, char *group, char *value)
+{
+    Card *card = NULL;
+    VCardErrorCode code = OK;
+    code = createCard(filename, &card);
+
+    if (code != OK)
+    {
+        printf("here");
+        return code;
+    }
+
+    Property *prop = malloc(sizeof(Property));
+    prop->group = malloc(strlen(group) + 1);
+    strcpy(prop->group, group);
+
+    prop->name = malloc(strlen(name) + 1);
+    strcpy(prop->name, name);
+
+    char *val = malloc(strlen(value) + 1);
+    strcpy(val, value);
+
+    prop->parameters = initializeList(&parameterToString, &deleteParameter, &compareParameters);
+    prop->values = initializeList(&valueToString, &deleteValue, &compareValues);
+    insertBack(prop->values, val);
+
+    addProperty(card, prop);
+    writeCard(filename, card);
+    return 0;
+}
+
+void changeDate(char *filename, char *dateString, char *type)
+{
+    Card *card = NULL;
+    VCardErrorCode code = OK;
+    code = createCard(filename, &card);
+
+    if (code != OK)
+    {
+        return;
+    }
+
+    if(strcmp(type, "bday") == 0){
+        DateTime *bday = JSONtoDT(dateString);
+
+        card->birthday = NULL;
+        card->birthday = bday;
+    }else{
+        DateTime *ann = JSONtoDT(dateString);
+
+        card->anniversary = NULL;
+        card->anniversary = ann;
+    }
+
+    writeCard(filename, card);
 }
 
 int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
-    createCard("uploads/testCard.vcf", &theCard);
+    int c = createCard("uploads/testCardGroup.vcf", &theCard);
+    printf("%d \n", c);
+    changeDate("uploads/testCard-BdayText.vcf", "{\"isText\":false,\"date\":\"19541223\",\"time\":\"234556\",\"text\":\"\",\"isUTC\":true}", "bday");
     // printf("%s \n", getParamValues("uploads/testCard.vcf"));
 
     // createNewCard("uploads/testCard.vcf", "M", 2);
-    uploadCard("{\"FN\":\"w\"}", "uploads/s.vcf");
-    Property *prop = theCard->optionalProperties->head->data;
-    Parameter *param = prop->parameters->head->data;
+    // uploadCard("{\"FN\":\"w\"}", "uploads/s.vcf");
+    // Property *prop = theCard->optionalProperties->head->data;
+    // Parameter *param = prop->parameters->head->data;
     // printf("%s \n", paramToJSON(param));
 
     validateCard(theCard);

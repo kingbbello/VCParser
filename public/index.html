@@ -68,6 +68,7 @@
 
                 </div>
             </div>
+            <div> <h3 id="viewPanelFileName" style="text-align: center;"> </h3></div>
             <div id="cardviewDiv">
                 <table id="cardviewTable" class="table table-bordered" style="table-layout: auto;">
                     <thead class="bg-success">
@@ -82,6 +83,30 @@
 
                     </tbody>
                 </table>
+
+                <div id="addProperty" >
+                    <div class="form-row align-items-center">
+                      <div class="col-auto my-1">
+                        <label class="mr-sm-2" for="inlineFormCustomSelect">Select Property name</label>
+                        <select class="custom-select mr-sm-2" id="addPropertySelect" disabled required>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row align-items-center">
+                        <div class="col-auto my-1">
+                            <label class="sr-only" for="inlineFormInput">Name</label>
+                            <input type="text" class="form-control mb-2" id="propGroup" placeholder="Property group" disabled>
+                          </div>
+                        <div class="col-auto my-1">
+                          <label class="sr-only" for="inlineFormInput">Name</label>
+                          <input type="text" class="form-control mb-2" id="propValue" placeholder="Property value" disabled required>
+                        </div>
+                        <div class="col-auto my-1">
+                          <button id="propSubmit" type="submit" class="btn btn-primary" disabled>Submit</button>
+                        </div>
+                      </div>
+                </div>
+
                 <!-- The Modal -->
                 <div id="myModal" class="modal">
 
@@ -114,14 +139,6 @@
             <label for="validationDefault03">FullName</label>
             <input type="text" class="form-control" id="fnValue" placeholder="full name" required>
           </div>
-          <!-- <div class="col-md-3 mb-3">
-            <label for="validationDefault04">State</label>
-            <input type="text" class="form-control" id="validationDefault04" placeholder="State" required>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="validationDefault05">Zip</label>
-            <input type="text" class="form-control" id="validationDefault05" placeholder="Zip" required>
-          </div> -->
         </div>
         <button id="createCustomCard" class="btn btn-primary" type="submit">Submit form</button>
     </div>

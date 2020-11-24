@@ -8,24 +8,26 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fileUpload = require("express-fileupload");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 
-let sharedLib = ffi.Library('./libvcparser.so', {
-  'createCard' :["int",['string', 'pointer']],
-  'getFN' :["string", ["string"]],
-  'getPropLen' : ["int", ["string"]],
-  'getPropNames' :["string", ["string"]],
-  'getPropValues' :["string", ["string"]],
-  'paramLen' :["string", ["string"]],
-  'validateCardII' : ['int', ['string']],
-  'getBDAY' :["string", ["string"]],
-  'getAnn' :["string", ["string"]],
-  'getParamValues' :["string", ["string"]],
-  'createNewCard' :["int", ["string", "string", "int"]],
-  'uploadCard' :["int", ["string", "string"]],
-})
+let sharedLib = ffi.Library("./libvcparser.so", {
+  createCard: ["int", ["string", "pointer"]],
+  getFN: ["string", ["string"]],
+  getPropLen: ["int", ["string"]],
+  getPropNames: ["string", ["string"]],
+  getPropValues: ["string", ["string"]],
+  paramLen: ["string", ["string"]],
+  validateCardII: ["int", ["string"]],
+  getBDAY: ["string", ["string"]],
+  getAnn: ["string", ["string"]],
+  getParamValues: ["string", ["string"]],
+  createNewCard: ["int", ["string", "string", "int"]],
+  uploadCard: ["int", ["string", "string"]],
+  addPropToCard: ["int", ["string", "string", "string", "string"]],
+  changeDate: ["void", ["string", "string", "string"]],
+});
 
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use(express.static(path.join(__dirname + "/uploads")));
 
@@ -49,17 +51,18 @@ app.get("/style.css", function (req, res) {
 
 // Send obfuscated JS, do not change
 app.get("/index.js", function (req, res) {
-  fs.readFile(path.join(__dirname + "/public/index.js"), "utf8", function (
-    err,
-    contents
-  ) {
-    const minimizedContents = JavaScriptObfuscator.obfuscate(contents, {
-      compact: true,
-      controlFlowFlattening: true,
-    });
-    res.contentType("application/javascript");
-    res.send(minimizedContents._obfuscatedCode);
-  });
+  fs.readFile(
+    path.join(__dirname + "/public/index.js"),
+    "utf8",
+    function (err, contents) {
+      const minimizedContents = JavaScriptObfuscator.obfuscate(contents, {
+        compact: true,
+        controlFlowFlattening: true,
+      });
+      res.contentType("application/javascript");
+      res.send(minimizedContents._obfuscatedCode);
+    }
+  );
 });
 
 //Respond to POST requests that upload files to uploads/ directory
@@ -117,7 +120,10 @@ app.get("/getFiles", function (req, res) {
 
   fs.readdir("uploads/", (err, files) => {
     files.forEach((file) => {
-      if (checkExtension(file) && sharedLib.validateCardII("uploads/"+file) === 0) {
+      if (
+        checkExtension(file) &&
+        sharedLib.validateCardII("uploads/" + file) === 0
+      ) {
         array.push(file);
         names.push(sharedLib.getFN("uploads/" + file));
         lengths.push(sharedLib.getPropLen("uploads/" + file));
@@ -125,72 +131,142 @@ app.get("/getFiles", function (req, res) {
     });
     res.send({
       filenames: array,
-      names : names,
-      sizes : lengths,
+      names: names,
+      sizes: lengths,
     });
   });
 });
 
-app.get("/properties", function(req, res){
+app.get("/properties", function (req, res) {
   const namesArray = [];
   const valArray = [];
   const lenArray = [];
   const paramArray = [];
 
   let filename = req.query.fname;
-  JSON.parse(sharedLib.getPropNames("uploads/" + filename)).forEach((name)=>{
+  JSON.parse(sharedLib.getPropNames("uploads/" + filename)).forEach((name) => {
     namesArray.push(name);
-  })
+  });
 
-  JSON.parse(sharedLib.getPropValues("uploads/" + filename)).forEach((val)=>{
+  JSON.parse(sharedLib.getPropValues("uploads/" + filename)).forEach((val) => {
     valArray.push(val);
-  })
+  });
 
-  JSON.parse(sharedLib.paramLen("uploads/" + filename)).forEach((length)=>{
+  JSON.parse(sharedLib.paramLen("uploads/" + filename)).forEach((length) => {
     lenArray.push(length);
-  })
+  });
 
-  JSON.parse(sharedLib.getParamValues("uploads/" + filename)).forEach((param)=>{
-    paramArray.push(param);
-  })
-
-  res.send({
-    names : namesArray,
-    values : valArray,
-    paramLengths : lenArray,
-    param : paramArray,
-    bday : sharedLib.getBDAY("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getBDAY("uploads/" + filename)) : "NULL",
-    ann : sharedLib.getAnn("uploads/" + filename).length > 0 ? JSON.parse(sharedLib.getAnn("uploads/" + filename)) : "NULL",
-  })
-})
-
-app.get('/changeValues', function(req, res){
-  let stat = sharedLib.createNewCard("uploads/"+req.query.filename, req.query.value, req.query.index);
+  JSON.parse(sharedLib.getParamValues("uploads/" + filename)).forEach(
+    (param) => {
+      paramArray.push(param);
+    }
+  );
 
   res.send({
-    act : stat
-  })
-})
+    names: namesArray,
+    values: valArray,
+    paramLengths: lenArray,
+    param: paramArray,
+    bday:
+      sharedLib.getBDAY("uploads/" + filename).length > 0
+        ? JSON.parse(sharedLib.getBDAY("uploads/" + filename))
+        : "NULL",
+    ann:
+      sharedLib.getAnn("uploads/" + filename).length > 0
+        ? JSON.parse(sharedLib.getAnn("uploads/" + filename))
+        : "NULL",
+  });
+});
 
-app.get('/verify', function(req, res){
+app.get("/changeValues", function (req, res) {
+  let stat = sharedLib.createNewCard(
+    "uploads/" + req.query.filename,
+    req.query.value,
+    req.query.index
+  );
+
+  res.send({
+    act: stat,
+  });
+});
+
+app.get("/exist", function (req, res) {
   let filename = req.query.name;
-  let stat = sharedLib.validateCardII('uploads/' + filename)
+
+  fs.readdir("uploads/", (err, files) => {
+    files.forEach((file) => {
+      if (file === filename) {
+        stat = 1;
+        res.send({
+          stat: stat,
+        });
+      }
+    });
+  });
+});
+
+app.get("/verify", function (req, res) {
+  let filename = req.query.name;
+  let stat = sharedLib.validateCardII("uploads/" + filename);
 
   res.send({
-    stat : stat
-  })
-})
+    stat: stat,
+  });
+});
 
-app.post('/customCard', function(req, res){
+app.post("/customCard", function (req, res) {
   let filename = req.body.filename;
   let value = req.body.value;
-  
-  let fn = {FN:value}
-  sharedLib.uploadCard(JSON.stringify(fn), 'uploads/' + filename)
+
+  let fn = { FN: value };
+  sharedLib.uploadCard(JSON.stringify(fn), "uploads/" + filename);
 
   res.send({
-    data : "hello"
+    data: "hello",
+  });
+});
+
+app.post("/addProp", function (req, res) {
+  let filename = req.body.filename;
+  let value = req.body.value;
+  let group = req.body.group;
+  let name = req.body.name;
+
+  sharedLib.addPropToCard("uploads/" + filename, name, group, value);
+
+  res.send("hello");
+});
+
+app.post("/changeDate", function (req, res) {
+  let isText = req.body.istext;
+  let date = req.body.date;
+  let time = req.body.time;
+  let text = req.body.text;
+  let isUTC = req.body.utc;
+
+  let filename = req.body.filename;
+  let type = req.body.type;
+
+  let dateString = {
+    isText: isText === "true" ? true : false,
+    date: date,
+    time: time,
+    text: text,
+    isUTC: isUTC === "true" ? true : false,
+  };
+  console.log(JSON.stringify(dateString));
+  sharedLib.changeDate("uploads/" + filename, JSON.stringify(dateString), type);
+
+  res.send("hello");
+});
+
+app.post('/deleteFile', function(req, res){
+  let filename = req.body.filename;
+  fs.unlink('uploads/'+filename, function(err){
+    if(err) throw err;
+    console.log('File deleted!');
   })
+  res.send('hey')
 })
 
 app.listen(portNum);
