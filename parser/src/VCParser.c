@@ -1981,7 +1981,7 @@ VCardErrorCode addPropToCard(char *filename, char *name, char *group, char *valu
     return 0;
 }
 
-void changeDate(char *filename, char *dateString, char *type)
+VCardErrorCode changeDate(char *filename, char *dateString, char *type)
 {
     Card *card = NULL;
     VCardErrorCode code = OK;
@@ -1989,7 +1989,7 @@ void changeDate(char *filename, char *dateString, char *type)
 
     if (code != OK)
     {
-        return;
+        return code;
     }
 
     if(strcmp(type, "bday") == 0){
@@ -2004,7 +2004,18 @@ void changeDate(char *filename, char *dateString, char *type)
         card->anniversary = ann;
     }
 
-    writeCard(filename, card);
+    code = validateCard(card);
+    if (code != OK)
+    {
+        return code;
+    }
+
+    code = writeCard(filename, card);
+    if (code != OK)
+    {
+        return code;
+    }
+    return OK;
 }
 
 int main()

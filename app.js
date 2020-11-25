@@ -24,7 +24,7 @@ let sharedLib = ffi.Library("./libvcparser.so", {
   createNewCard: ["int", ["string", "string", "int"]],
   uploadCard: ["int", ["string", "string"]],
   addPropToCard: ["int", ["string", "string", "string", "string"]],
-  changeDate: ["void", ["string", "string", "string"]],
+  changeDate: ["int", ["string", "string", "string"]],
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -237,15 +237,15 @@ app.post("/addProp", function (req, res) {
   res.send("hello");
 });
 
-app.post("/changeDate", function (req, res) {
-  let isText = req.body.istext;
-  let date = req.body.date;
-  let time = req.body.time;
-  let text = req.body.text;
-  let isUTC = req.body.utc;
+app.get("/changeDate", function (req, res) {
+  let isText = req.query.istext;
+  let date = req.query.date;
+  let time = req.query.time;
+  let text = req.query.text;
+  let isUTC = req.query.utc;
 
-  let filename = req.body.filename;
-  let type = req.body.type;
+  let filename = req.query.filename;
+  let type = req.query.type;
 
   let dateString = {
     isText: isText === "true" ? true : false,
@@ -254,10 +254,12 @@ app.post("/changeDate", function (req, res) {
     text: text,
     isUTC: isUTC === "true" ? true : false,
   };
-  console.log(JSON.stringify(dateString));
-  sharedLib.changeDate("uploads/" + filename, JSON.stringify(dateString), type);
+  // console.log(JSON.stringify(dateString));
+  let stat = sharedLib.changeDate("uploads/" + filename, JSON.stringify(dateString), type);
 
-  res.send("hello");
+  res.send({
+    act: stat,
+  });
 });
 
 app.post('/deleteFile', function(req, res){

@@ -14,43 +14,51 @@ $(document).ready(function () {
 
   $("#upload_button").on("click", function (event) {
     event.preventDefault();
-    let file = $("#upload_filename")[0].files[0];
-    let data = new FormData();
-    data.append("uploadFile", file);
 
-    $.ajax({
-      type: "post", //Request type
-      url: "/upload", //The server endpoint we are connecting to
-      data: data,
-      contentType: false,
-      processData: false,
-      success: function () {
-        $.ajax({
-          type: "get",
-          url: "/verify",
-          datatype: "json",
-          data: { name: file.name },
-          success: function (data) {
-            set = data.stat;
-            if (set === 0) {
-              alert(file.name + " has been uploaded");
-              location.reload();
-            } else {
-              alert("The file you uploaded is not a valid vCard");
-              $.ajax({
-                type: "post",
-                url: "/deleteFile",
-                datatype: "json",
-                data: { filename: file.name },
-              });
-            }
-          },
-        });
-      },
-      failure: function () {
-        alert("File failed to upload");
-      },
-    });
+    if ($("#upload_filename")[0].value.length > 0) {
+      let file = $("#upload_filename")[0].files[0];
+      console.log(file.name);
+      let data = new FormData();
+      data.append("uploadFile", file);
+
+      $.ajax({
+        type: "post", //Request type
+        url: "/upload", //The server endpoint we are connecting to
+        data: data,
+        contentType: false,
+        processData: false,
+        success: function () {
+          $.ajax({
+            type: "get",
+            url: "/verify",
+            datatype: "json",
+            data: { name: file.name },
+            success: function (data) {
+              set = data.stat;
+              if (set === 0) {
+                alert(file.name + " has been uploaded");
+                location.reload();
+              } else {
+                alert("The file you uploaded is not a valid vCard");
+                $.ajax({
+                  type: "post",
+                  url: "/deleteFile",
+                  datatype: "json",
+                  data: { filename: file.name },
+                });
+              }
+            },
+          });
+        },
+        failure: function () {
+          alert("File failed to upload");
+        },
+      });
+    } else {
+      alert(
+        "Please click the 'Browse' button to select the file you wish to upload"
+      );
+    }
   });
 
   $.ajax({
@@ -132,6 +140,7 @@ $(document).ready(function () {
         },
         success: function () {
           alert("File has been successfully uploaded");
+          location.reload();
         },
         fail: function () {
           alert("An error occurred");
@@ -218,11 +227,11 @@ $(document).ready(function () {
             value += bday.text;
           } else {
             if (bday.date.length > 0) {
-              value += "<div>Date: " + bday.date + "</div>";
+              value += "<div>Date: " + parseDate(bday.date) + "</div>";
             }
 
             if (bday.time.length > 0) {
-              value += "</div>Time: " + bday.time + " ";
+              value += "</div>Time: " + parseTime(bday.time) + " ";
 
               if (bday.isUTC) {
                 value += "(UTC)";
@@ -251,11 +260,11 @@ $(document).ready(function () {
             value += ann.text;
           } else {
             if (ann.date.length > 0) {
-              value += "<div>Date: " + ann.date + "</div>";
+              value += "<div>Date: " + parseDate(ann.date) + "</div>";
             }
 
             if (ann.time.length > 0) {
-              value += "<div>Time: " + ann.time;
+              value += "<div>Time: " + parseTime(ann.time);
               if (ann.isUTC) {
                 value += "(UTC)";
               }
@@ -267,17 +276,20 @@ $(document).ready(function () {
 
           annRow += "<td>" + (propNames.length + len) + "</td>";
           annRow += "<td> ANN </td>";
-          annRow += "<td>" + value + "</td>";
+          annRow +=
+            '<td onwheel="changeAnn()" onclick="changeAnn2()">' +
+            value +
+            "</td>";
           annRow += "<td> 0 </td>";
 
           annRow += "<tr>";
         }
 
         if (propNames.length < 10) {
-          $(".my-custom-scrollbar2").css("height", "600px");
+          $(".my-custom-scrollbar2").css("height", "690px");
           // $('.my-custom-scrollbar2').css('overflow', 'hidden')
         } else {
-          $(".my-custom-scrollbar2").css("height", "620px");
+          $(".my-custom-scrollbar2").css("height", "690px");
           $(".my-custom-scrollbar2").css("overflow", "auto");
           $(".my-custom-scrollbar2").css("overflow", "scroll");
         }
@@ -327,7 +339,7 @@ function change(filename, index, size) {
   if (size === 1 && index > 0) {
     let value = prompt("Please enter a new value");
 
-    if (value !== null) {
+    if (value !== "" && value !== null) {
       $.ajax({
         type: "get",
         datatype: "json",
@@ -350,9 +362,10 @@ function changeBday() {
   let value = prompt(
     "Please enter the new bday text \n *Note: to change to non-text, click the date value field"
   );
-  if (value !== null) {
+
+  if (value !== "" && value !== null) {
     $.ajax({
-      type: "post",
+      type: "get",
       datatype: "json",
       url: "/changeDate",
       data: {
@@ -374,18 +387,28 @@ function changeBday() {
 
 function changeBday2() {
   let date = prompt(
-    "Please enter a value for the date\n *Note: to change to text, double click the date value field"
+    "Please enter a value for the date\n *Note: to change to text,  scroll on the date value field"
   );
 
   let time = prompt("Please enter a value for the time");
   let utc = prompt(
     "Please type 'yes' for UTC \n All other inputs sets UTC to false"
   );
+  let regExp = /[a-zA-Z]/g;
+  let bool = regExp.test(date) || regExp.test(time) ? true : false;
 
   let UTC = utc === "yes" ? true : false;
-  if (date !== null && time !== null && utc !== null) {
+  if (
+    bool === false &&
+    date !== "" &&
+    time !== "" &&
+    utc !== "" &&
+    date !== null &&
+    time !== null &&
+    utc !== null
+  ) {
     $.ajax({
-      type: "post",
+      type: "get",
       datatype: "json",
       url: "/changeDate",
       data: {
@@ -397,15 +420,178 @@ function changeBday2() {
         text: "",
         utc: UTC,
       },
+      success: function (data) {
+        if (data.act === 0) {
+          alert("You've successfully changed the date value");
+          location.reload();
+        } else {
+          alert("The value(s), you've entered is not valid. Please try again!");
+        }
+      },
+    });
+  } else {
+    if (bool === false) {
+      alert("Please fill all prompted fields");
+    } else {
+      alert("You've entered a letter in one of the fields. Please try again!");
+    }
+  }
+}
+
+function changeAnn() {
+  let value = prompt(
+    "Please enter the new bday text \n *Note: to change to non-text, click the date value field"
+  );
+  if (value !== null && value !== "") {
+    $.ajax({
+      type: "get",
+      datatype: "json",
+      url: "/changeDate",
+      data: {
+        filename: $("#viewPanelFileName")[0].innerHTML,
+        type: "ann",
+        istext: true,
+        date: "",
+        time: "",
+        text: value,
+        utc: false,
+      },
       success: function () {
         alert("done");
         location.reload();
       },
     });
-  } else {
-    alert("Please fill all prompted fields");
   }
-  return false;
+}
+
+function changeAnn2() {
+  let date = prompt(
+    "Please enter a value for the date\n *Note: to change to text, scroll on the date value field"
+  );
+  let time = prompt("Please enter a value for the time");
+  let utc = prompt(
+    "Please type 'yes' for UTC \n All other inputs sets UTC to false"
+  );
+
+  let regExp = /[a-zA-Z]/g;
+  let bool = regExp.test(date) || regExp.test(time) ? true : false;
+
+  let UTC = utc === "yes" ? true : false;
+
+  if (
+    bool === false &&
+    date !== "" &&
+    time !== "" &&
+    utc !== "" &&
+    date !== null &&
+    time !== null &&
+    utc !== null
+  ) {
+    $.ajax({
+      type: "get",
+      datatype: "json",
+      url: "/changeDate",
+      data: {
+        filename: $("#viewPanelFileName")[0].innerHTML,
+        type: "ann",
+        istext: false,
+        date: date,
+        time: time,
+        text: "",
+        utc: UTC,
+      },
+      success: function (data) {
+        if (data.act === 0) {
+          alert("You've successfully changed the date value");
+          location.reload();
+        } else {
+          alert("The value(s), you've entered is not valid. Please try again!");
+        }
+      },
+    });
+  } else {
+    if (bool === false) {
+      alert("Please fill all prompted fields");
+    } else {
+      alert("You've entered a letter in one of the fields. Please try again!");
+    }
+  }
+}
+
+function parseDate(date) {
+  if (date.length === 8) {
+    let day = date.slice(6, 8);
+    let year = date.slice(0, 4);
+    let month = getMonth(date.slice(4, 6));
+
+    day = day[0] === "0" ? day[1] : day;
+    return `${month} ${day}, ${year}`;
+  }
+
+  return date;
+}
+
+function parseTime(time) {
+  if (time[0] === "-") {
+    if (time[1] === "-") {
+      let min = time.slice(2, 4);
+
+      return `00:00:${sec}`;
+    } else {
+      let min = time.slice(1, 3);
+      let sec = time.slice(3, 5);
+
+      return `00:${min}:${sec}`;
+    }
+  }
+
+  if (time.length == 6) {
+    let hour = time.slice(0, 2);
+    let min = time.slice(2, 4);
+    let sec = time.slice(4, 6);
+
+    return hour + ":" + min + ":" + sec;
+  }
+
+  if (time.length == 4) {
+    let hour = time.slice(0, 2);
+    let min = time.slice(2, 4);
+
+    return hour + ":" + min;
+  }
+
+  return time;
+}
+
+function getMonth(month) {
+  switch (month) {
+    case "01":
+      return "January";
+    case "02":
+      return "February";
+    case "03":
+      return "March";
+    case "4":
+      return "April";
+    case "05":
+      return "May";
+    case "06":
+      return "June";
+    case "07":
+      return "July";
+    case "08":
+      return "August";
+    case "09":
+      return "September";
+    case "10":
+      return "October";
+    case "11":
+      return "November";
+    case "12":
+      return "December";
+    default:
+      return " ";
+  }
 }
 
 $("#propSubmit").click(function () {
