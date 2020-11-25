@@ -532,18 +532,18 @@ function parseDate(date) {
 }
 
 function parseTime(time) {
-  if (time[0] === "-") {
-    if (time[1] === "-") {
-      let min = time.slice(2, 4);
+  // if (time[0] === "-") {
+  //   if (time[1] === "-") {
+  //     let min = time.slice(2, 4);
 
-      return `00:00:${sec}`;
-    } else {
-      let min = time.slice(1, 3);
-      let sec = time.slice(3, 5);
+  //     return `00:00:${sec}`;
+  //   } else {
+  //     let min = time.slice(1, 3);
+  //     let sec = time.slice(3, 5);
 
-      return `00:${min}:${sec}`;
-    }
-  }
+  //     return `00:${min}:${sec}`;
+  //   }
+  // }
 
   if (time.length == 6) {
     let hour = time.slice(0, 2);
