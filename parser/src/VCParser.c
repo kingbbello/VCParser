@@ -2031,7 +2031,6 @@ int main()
     // uploadCard("{\"FN\":\"w\"}", "uploads/s.vcf");
     // Property *prop = theCard->optionalProperties->head->data;
     // Parameter *param = prop->parameters->head->data;
-    // printf("%s \n", paramToJSON(param));
 
     validateCard(theCard);
     deleteCard(theCard);
