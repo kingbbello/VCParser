@@ -25,6 +25,27 @@ input[type=submit], button, h1 {
     cursor: hand;
 }
 
+.sidebar {
+    text-align: center;
+    height: 100%;
+    width: 180px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #efefef;
+    overflow: hidden;
+    padding: 10px;
+    padding-top: 120px;
+    box-shadow: 0px 0px 17px 0px rgba(0, 0, 0, 0.2);
+}
+
+#loginStatus {
+    bottom: 0;
+    position: fixed;
+    width: 100px;
+    padding-right: 20px;
+}
+
 .my-custom-scrollbar {
     position: relative;
     /* height: 330px; */

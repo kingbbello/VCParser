@@ -25,6 +25,54 @@
 </head>
 
 <body>
+    <section class = "sidebar">
+        <button class="btn btn-outline-primary" data-toggle="modal" data-target="#exampleModal" type="button" name="login" id="loginButton">Log in</button>
+        <br>
+        <br>
+        <br>
+        <button class="btn btn-outline-primary" type="button" name="storeFiles" id="storeFilesButton">Store All Files</button>
+        <br>
+        <br>
+        <br>
+        <button class="btn btn-outline-primary" type="button" name="clearData" id="clearDataButton">Clear All Data</button>
+        <br>
+        <br>
+        <br>
+        <button class="btn btn-outline-primary" type="button" name="displayDBStatus" id="displayDBStatusButton">Display DB Status</button>
+        <p id="loginStatus">Hello</p>
+      </section>
+
+      <!-- Modal -->
+      <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form>
+                <div class="form-group">
+                  <label for="recipient-name" class="col-form-label">Recipient:</label>
+                  <input type="text" class="form-control" id="recipient-name">
+                </div>
+                <div class="form-group">
+                  <label for="message-text" class="col-form-label">Message:</label>
+                  <textarea class="form-control" id="message-text"></textarea>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Send message</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     <div class="jumbotron jumbotron-fluid">
         <div class="container">
             <h1 class="display-4" style="text-align: center;">vCard Viewer</h1>
@@ -105,17 +153,6 @@
                           <button id="propSubmit" type="submit" class="btn btn-primary" disabled>Submit</button>
                         </div>
                       </div>
-                </div>
-
-                <!-- The Modal -->
-                <div id="myModal" class="modal">
-
-                    <!-- Modal content -->
-                    <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <p>Some text in the Modal..</p>
-                    </div>
-                
                 </div>
             </div>
         </div>
