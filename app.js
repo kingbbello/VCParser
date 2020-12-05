@@ -9,6 +9,9 @@ const app = express();
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const bodyParser = require("body-parser");
+const mysql = require("mysql2/promise");
+
+let connection;
 
 let sharedLib = ffi.Library("./libvcparser.so", {
   createCard: ["int", ["string", "pointer"]],
@@ -255,21 +258,387 @@ app.get("/changeDate", function (req, res) {
     isUTC: isUTC === "true" ? true : false,
   };
   // console.log(JSON.stringify(dateString));
-  let stat = sharedLib.changeDate("uploads/" + filename, JSON.stringify(dateString), type);
+  let stat = sharedLib.changeDate(
+    "uploads/" + filename,
+    JSON.stringify(dateString),
+    type
+  );
 
   res.send({
     act: stat,
   });
 });
 
-app.post('/deleteFile', function(req, res){
+app.post("/deleteFile", function (req, res) {
   let filename = req.body.filename;
-  fs.unlink('uploads/'+filename, function(err){
-    if(err) throw err;
-    console.log('File deleted!');
-  })
-  res.send('hey')
-})
+  fs.unlink("uploads/" + filename, function (err) {
+    if (err) throw err;
+    console.log("File deleted!");
+  });
+  res.send("hey");
+});
+
+//***********************DATABASE PART ************************************** */
+app.get("/login", async function (req, res) {
+  let username = req.query.data;
+  let password = req.query.pass;
+  let database = req.query.data;
+
+  // let username = 'mbello';
+  // let password = '0998244';
+  // let database = 'mbello';
+
+  // console.log(username + " " + password + " " + database);
+
+  try {
+    connection = await mysql.createConnection({
+      host: "dursley.socs.uoguelph.ca",
+      user: username,
+      password: password,
+      database: database,
+    });
+
+    let fileTable = `CREATE TABLE IF NOT EXISTS FILE (id INT AUTO_INCREMENT PRIMARY KEY, file_Name VARCHAR(60) NOT NULL, num_props INT NOT NULL, name VARCHAR(256) NOT NULL,birthday DATETIME,anniversary DATETIME,creation_time DATETIME NOT NULL);`;
+    let downloadTable = `CREATE TABLE IF NOT EXISTS DOWNLOAD (download_id INT AUTO_INCREMENT PRIMARY KEY, d_descr VARCHAR(256), id INT NOT NULL, download_time DATETIME NOT NULL, FOREIGN KEY(id) REFERENCES FILE(id) ON DELETE CASCADE);`;
+
+    await connection.execute(fileTable);
+    await connection.execute(downloadTable);
+
+    res.send(true);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/storeFiles", async function (req, res) {
+  try {
+    let [rows] = await connection.execute("SELECT file_Name from FILE");
+
+    let fileNameRow = [];
+    for (let row of rows) {
+      fileNameRow.push(row.file_Name);
+    }
+
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1);
+    let day = (date.getDate() <= 9 ? "0" : "") + date.getDate();
+    let hour = (date.getHours() <= 9 ? "0" : "") + date.getHours();
+    let min = (date.getMinutes() <= 9 ? "0" : "") + date.getMinutes();
+    let secs = (date.getSeconds() <= 9 ? "0" : "") + date.getSeconds();
+    let dateString = "" + year + month + day + hour + min + secs;
+
+    const array = [];
+    const names = [];
+    const lengths = [];
+    const bday = [];
+    const ann = [];
+
+    fs.readdir("uploads/", async (err, files) => {
+      files.forEach(async (file) => {
+        if (
+          checkExtension(file) &&
+          sharedLib.validateCardII("uploads/" + file) === 0
+        ) {
+          array.push(file);
+          names.push(sharedLib.getFN("uploads/" + file));
+          lengths.push(sharedLib.getPropLen("uploads/" + file));
+          bday.push(sharedLib.getBDAY("uploads/" + file));
+          ann.push(sharedLib.getAnn("uploads/" + file));
+        }
+      });
+
+      for (let i = 0; i < array.length; i++) {
+        let bdayText =
+          bday[i].length === 0
+            ? ""
+            : `${JSON.parse(bday[i]).date}${JSON.parse(bday[i]).time}`;
+        let annText =
+          ann[i].length === 0
+            ? ""
+            : `${JSON.parse(ann[i]).date}${JSON.parse(ann[i]).time}`;
+
+        bdayText = isNaN(Number(bdayText)) ? "NULL" : Number(bdayText);
+        annText = isNaN(Number(annText)) ? "NULL" : Number(annText);
+        if (!fileNameRow.includes(array[i])) {
+          // console.log(`INSERT INTO FILE VALUES (NULL, '${array[i]}', ${lengths[i]}, ${names[i]}, ${bdayText}, ${annText}, ${Number(dateString)})`)
+
+          await connection.execute(
+            `INSERT INTO FILE VALUES ('NULL', '${array[i]}', ${lengths[i]}, '${
+              names[i]
+            }', ${bdayText}, ${annText}, ${Number(dateString)})`
+          );
+        }
+      }
+
+      res.send(true);
+    });
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/updateFiles", async function (req, res) {
+  try {
+    let file = req.query.filename;
+
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1);
+    let day = (date.getDate() <= 9 ? "0" : "") + date.getDate();
+    let hour = (date.getHours() <= 9 ? "0" : "") + date.getHours();
+    let min = (date.getMinutes() <= 9 ? "0" : "") + date.getMinutes();
+    let secs = (date.getSeconds() <= 9 ? "0" : "") + date.getSeconds();
+    let dateString = "" + year + month + day + hour + min + secs;
+
+    let name = "";
+    let length = "";
+    let bday = "";
+    let ann = "";
+
+    if (
+      checkExtension(file) &&
+      sharedLib.validateCardII("uploads/" + file) === 0
+    ) {
+      name = sharedLib.getFN("uploads/" + file);
+      length = sharedLib.getPropLen("uploads/" + file);
+      bday = sharedLib.getBDAY("uploads/" + file);
+      ann = sharedLib.getAnn("uploads/" + file);
+    } else {
+      res.send(false);
+    }
+
+    let bdayText =
+      bday.length === 0
+        ? ""
+        : `${JSON.parse(bday).date}${JSON.parse(bday).time}`;
+    let annText =
+      ann.length === 0 ? "" : `${JSON.parse(ann).date}${JSON.parse(ann).time}`;
+
+    bdayText = isNaN(Number(bdayText)) ? "NULL" : Number(bdayText);
+    annText = isNaN(Number(annText)) ? "NULL" : Number(annText);
+
+    // console.log(`INSERT INTO FILE VALUES (NULL, '${array[i]}', ${lengths[i]}, ${names[i]}, ${bdayText}, ${annText}, ${Number(dateString)})`)
+    await connection.execute(`DELETE FROM FILE WHERE file_Name='${file}'`);
+
+    await connection.execute(
+      `INSERT INTO FILE VALUES ('NULL', '${file}', ${length}, '${name}', ${bdayText}, ${annText}, ${Number(
+        dateString
+      )})`
+    );
+
+    res.send(true);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/clear", async function (req, res) {
+  try {
+    await connection.execute("DELETE FROM DOWNLOAD");
+    await connection.execute("DELETE FROM FILE");
+    res.send(true);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/trackDownload", async function (req, res) {
+  try {
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = (date.getMonth() <= 9 ? "0" : "") + (date.getMonth() + 1);
+    let day = (date.getDate() <= 9 ? "0" : "") + date.getDate();
+    let hour = (date.getHours() <= 9 ? "0" : "") + date.getHours();
+    let min = (date.getMinutes() <= 9 ? "0" : "") + date.getMinutes();
+    let secs = (date.getSeconds() <= 9 ? "0" : "") + date.getSeconds();
+    let dateString = "" + year + month + day + hour + min + secs;
+
+    let filename = req.query.filename;
+    let [row] = await connection.execute(
+      `SELECT id  FROM FILE WHERE file_Name = '${filename}';`
+    );
+
+    if (row.length > 0) {
+      let id = row[0].id;
+      await connection.execute(
+        `INSERT INTO DOWNLOAD VALUES('NULL', 'NULL', ${id}, ${Number(
+          dateString
+        )})`
+      );
+    } else {
+      res.send(false);
+    }
+
+    res.send(true);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/execute1", async function (req, res) {
+  try {
+    let order = req.query.sort === "individual" ? "name" : "file_Name";
+
+    let [rows] = await connection.execute(
+      `SELECT file_Name, num_props, name, birthday, anniversary, creation_time from FILE ORDER BY ${order}`
+    );
+    let string = "";
+
+    for (let row of rows) {
+      string += "<tr>";
+      string += `<td>${row.file_Name}</td> `;
+      string += `<td>${row.num_props}</td> `;
+      string += `<td>${row.name}</td> `;
+      string += `<td>${row.birthday}</td> `;
+      string += `<td>${row.anniversary}</td> `;
+      string += `<td>${row.creation_time}</td> `;
+      string += "</tr>";
+    }
+    res.send(string);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/execute2", async function (req, res) {
+  try {
+    let [rows] = await connection.execute(
+      `SELECT name, birthday from FILE ORDER BY birthday`
+    );
+    let string = "";
+
+    for (let row of rows) {
+      string += "<tr>";
+      string += `<td>${row.name}</td> `;
+      string += `<td>${row.birthday}</td> `;
+      string += "</tr>";
+    }
+    res.send(string);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/execute3", async function (req, res) {
+  try {
+    let order = req.query.sort === "individual" ? "name" : "anniversary";
+
+    // let [firstrows] = await connection.execute(
+    //   `SELECT id, name, anniversary, COUNT(anniversary) from FILE GROUP BY anniversary HAVING (COUNT(anniversary) > 1)`
+    // );
+
+    // console.log(firstrows);
+    // let array = [];
+    // for (let crow of firstrows) {
+    //   array.push(crow.id);
+    // }
+
+    // let where = "";
+    // for (let i = 0; i < array.length; i++) {
+    //   if (i === 0) {
+    //     where += `WHERE anniversary='${array[i]}' `;
+    //   } else {
+    //     where += `OR anniversary='${array[i]}'`;
+    //   }
+    // }
+
+    // console.log(where)
+    let string = "";
+    let [rows] = await connection.execute(
+      `SELECT name, anniversary from FILE WHERE anniversary IN (SELECT anniversary from FILE GROUP BY anniversary HAVING COUNT(*) > 1) ORDER BY ${order}`
+    );
+    for (let row of rows) {
+      string += "<tr>";
+      string += `<td>${row.name}</td> `;
+      string += `<td>${row.anniversary}</td> `;
+      string += "</tr>";
+    }
+
+    res.send(string);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/execute5", async function (req, res) {
+  try {
+    let order = req.query.sort;
+    let limit = isNaN(req.query.count) ? 0 : Number(req.query.count);
+    if(limit === 0){
+      res.send("No query found");
+      return;
+    }
+
+    await connection.execute(`DROP TABLE IF EXISTS TEST`);
+    await connection.execute(
+      `CREATE TABLE TEST AS SELECT file_Name, name, d_descr, download_time FROM (DOWNLOAD INNER JOIN FILE ON DOWNLOAD.id=FILE.id) order by download_id desc limit ${limit}`
+    );
+
+    let [rows] = await connection.execute(
+      `SELECT file_Name, name, count(file_Name) as count, d_descr, MAX(download_time) as max FROM (SELECT * FROM TEST) AS SUB GROUP BY file_Name ORDER BY ${order}`
+    );
+    let string = "";
+    
+    if(rows.length === 0){
+      res.send("<tr><td>No query found</td></tr>");
+      return;
+    }
+
+    for (let row of rows) {
+      string += "<tr>";
+      string += `<td>${row.file_Name}</td> `;
+      string += `<td>${row.name}</td> `;
+      string += `<td>${row.count}</td> `;
+      string += `<td>${row.d_descr}</td> `;
+      string += `<td>${row.max}</td> `;
+      string += "</tr>";
+    }
+    
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
+app.get("/execute4", async function (req, res) {
+  try {
+    let order = req.query.sort;
+    console.log('here');
+    let [rows] = await connection.execute(
+      `SELECT file_Name, num_props, name, birthday, anniversary, creation_time from FILE WHERE creation_time BETWEEN '${req.query.start}' AND '${req.query.end}' ORDER BY '${order}'`
+    );
+    let string = "";
+    
+    if(rows.length === 0){
+      res.send("<tr><td>No query found</td></tr>");
+      return;
+    }
+    for (let row of rows) {
+      string += "<tr>";
+      string += `<td>${row.file_Name}</td> `;
+      string += `<td>${row.num_props}</td> `;
+      string += `<td>${row.name}</td> `;
+      string += `<td>${row.birthday}</td> `;
+      string += `<td>${row.anniversary}</td> `;
+      string += `<td>${row.creation_time}</td> `;
+      string += "</tr>";
+    }
+    
+    res.send(string);
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
 
 app.listen(portNum);
 console.log("Running app at localhost: " + portNum);

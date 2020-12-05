@@ -90,6 +90,13 @@ th {
     margin-top: 50px;
 }
 
+@media (min-width: 768px) {
+    .modal-xl {
+      width: 100%;
+     max-width:3600px;
+    }
+  }
+
 @media(max-width: 900px) {
     html {
         font-size: 14px !important;

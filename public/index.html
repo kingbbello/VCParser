@@ -2,184 +2,436 @@
 <html lang="en">
 
 <head>
-    <title>vCard Viewer</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="vcard viewer">
-    <meta name="keywords" content="vCard viewer">
-    <meta name="author" content="vCard viewer">
-    <!-- Load jquery, bootstrap -->
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
-        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"></script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="/style.css">
-    <!-- Custom CSS End -->
+  <title>vCard Viewer</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="vcard viewer">
+  <meta name="keywords" content="vCard viewer">
+  <meta name="author" content="vCard viewer">
+  <!-- Load jquery, bootstrap -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <!-- Custom CSS End -->
 </head>
 
 <body>
-    <section class = "sidebar">
-        <button class="btn btn-outline-primary" data-toggle="modal" data-target="#exampleModal" type="button" name="login" id="loginButton">Log in</button>
-        <br>
-        <br>
-        <br>
-        <button class="btn btn-outline-primary" type="button" name="storeFiles" id="storeFilesButton">Store All Files</button>
-        <br>
-        <br>
-        <br>
-        <button class="btn btn-outline-primary" type="button" name="clearData" id="clearDataButton">Clear All Data</button>
-        <br>
-        <br>
-        <br>
-        <button class="btn btn-outline-primary" type="button" name="displayDBStatus" id="displayDBStatusButton">Display DB Status</button>
-        <p id="loginStatus">Hello</p>
-      </section>
+  <section class="sidebar">
+    <button class="btn btn-outline-primary" data-toggle="modal" data-target="#exampleModal" type="button" name="login"
+      id="loginButton">Log in</button>
+    <br>
+    <br>
+    <br>
+    <button class="btn btn-outline-primary" type="button" name="storeFiles" id="storeFiles" disabled>Store All
+      Files</button>
+    <br>
+    <br>
+    <br>
+    <button class="btn btn-outline-primary" type="button" name="clearData" id="clearData" disabled>Clear All Data</button>
+    <br>
+    <br>
+    <br>
+    <button class="btn btn-outline-primary" type="button" name="displayDBStatus" id="displayDBStatusButton" disabled>Display
+      DB</button>
+    <br>
+    <br>
+    <br>
+    <button data-toggle="modal" data-target="#executeQueryModal" class="btn btn-outline-primary" type="button"
+      name="executeQuery" id="executeQuery" disabled>Execute Query</button>
+  </section>
 
-      <!-- Modal -->
-      <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">New message</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Please enter database details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="modal-username" class="col-form-label">Username:</label>
+              <input type="text" class="form-control" id="modal-username">
             </div>
-            <div class="modal-body">
-              <form>
-                <div class="form-group">
-                  <label for="recipient-name" class="col-form-label">Recipient:</label>
-                  <input type="text" class="form-control" id="recipient-name">
-                </div>
-                <div class="form-group">
-                  <label for="message-text" class="col-form-label">Message:</label>
-                  <textarea class="form-control" id="message-text"></textarea>
-                </div>
-              </form>
+            <div class="form-group">
+              <label for="modal-password" class="col-form-label">Password:</label>
+              <input type="password" class="form-control" id="modal-password">
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Send message</button>
+            <div class="form-group">
+              <label for="modal-database" class="col-form-label">Database Name:</label>
+              <input type="text" class="form-control" id="modal-database">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button id="modal-submit" type="button" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execute Query Modal -->
+  <div class="modal fade" id="executeQueryModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Please enter database details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="executeQuery1" class="col-form-label">Display All Files:</label>
+              <button data-toggle="modal" data-target="#displayModal" id="executeQuery1" type="button"
+                class="btn btn-primary" style="float: right;">Display</button>
+            </div>
+            <div class="form-group">
+              <label for="executeQuery2" class="col-form-label">Display All Individuals sorted by birthday:</label>
+              <button data-toggle="modal" data-target="#displayModal2" id="executeQuery2" type="button"
+                class="btn btn-primary" style="float: right;">Display</button>
+            </div>
+            <div class="form-group">
+              <label for="executeQuery3" class="col-form-label">Display All Individuals who share same
+                anniversary:</label>
+              <button data-toggle="modal" data-target="#displayModal3" id="executeQuery3" type="button"
+                class="btn btn-primary" style="float: right;">Display</button>
+            </div>
+            <div class="form-group">
+              <label for="executeQuery4" class="col-form-label">Display All Files between specific dates:</label>
+              <br>
+              <label for="startDateTime">Start date:</label>
+              <input type="date" id="startDateTime" placeholder="" value="2020-10-10">
+              <br>
+              <label for="endDateTime">Start date:</label>
+              <input type="date" id="endDateTime" placeholder="" value="2020-10-11">
+              <button data-toggle="modal" data-target="#displayModal4" id="executeQuery4" type="button"
+                class="btn btn-primary" style="float: right;">Display</button>
+            </div>
+            <div class="form-group">
+              <label for="executeQuery5" class="col-form-label">Display N most frequently downloaded files:</label>
+              <br>
+              <input type="number" id="frequency" placeholder="0" value="0" min="0">
+              <button data-toggle="modal" data-target="#displayModal5" id="executeQuery5" type="button"
+                class="btn btn-primary" style="float: right;">Display</button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button id="executeClose" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <!-- <button id="modal-submit" type="button" class="btn btn-primary">Submit</button> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Display Queries Modal 2 -->
+  <div class="modal fade modal-dialog modal-xl" id="displayModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Execute Query 2</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="displayModalContent2" class="modal-body">
+          <table id="displayModal2Table" class="table table-bordered" style="table-layout: fixed;">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col" style="width: 40px; text-align: center;">name</th>
+                <th scope="col" style="width: 40px; text-align: center;">birthday</th>
+              </tr>
+            </thead>
+            <tbody id="displayModal2TableBody">
+              
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Display Queries Modal -->
+  <div class="modal fade modal-dialog modal-xl" id="displayModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Execute Query 1</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="displayModalContent" class="modal-body">
+          <table id="displayModalTable" class="table table-bordered" style="table-layout: fixed;">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col" style="width: 50px; text-align: center;">File name</th>
+                <th scope="col" style="width: 20px; text-align: center;">num_props</th>
+                <th scope="col" style="width: 40px; text-align: center;">name</th>
+                <th scope="col" style="width: 40px; text-align: center;">birthday</th>
+                <th scope="col" style="width: 40px; text-align: center;">anniversary</th>
+                <th scope="col" style="width: 40px; text-align: center;">creation time</th>
+              </tr>
+            </thead>
+            <tbody id="displayModalTableBody">
+              
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <label for="sortByIndividual" class="col-form-label">Sort By:</label>
+          <button id="sortByIndividual" type="button" class="btn btn-primary">Individual Name</button>
+          <button id="sortByFile" type="button" class="btn btn-primary">File Name</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Display Queries Modal 3-->
+  <div class="modal fade modal-dialog modal-xl" id="displayModal3" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Execute Query 3</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="displayModalContent3" class="modal-body">
+          <table id="displayModal3Table" class="table table-bordered" style="table-layout: fixed;">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col" style="width: 40px; text-align: center;">name</th>
+                <th scope="col" style="width: 40px; text-align: center;">anniversary</th>
+              </tr>
+            </thead>
+            <tbody id="displayModal3TableBody">
+              
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <label for="sortByIndividual" class="col-form-label">Sort By:</label>
+          <button id="sortByIndividual3" type="button" class="btn btn-primary">Individual Name</button>
+          <button id="sortByAnniversary" type="button" class="btn btn-primary">Anniversary</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Display Queries Modal 4-->
+  <div class="modal fade modal-dialog modal-xl" id="displayModal4" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Execute Query 4</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="displayModalContent4" class="modal-body">
+          <table id="displayModal4Table" class="table table-bordered" style="table-layout: fixed;">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col" style="width: 50px; text-align: center;">File name</th>
+                <th scope="col" style="width: 20px; text-align: center;">num_props</th>
+                <th scope="col" style="width: 40px; text-align: center;">name</th>
+                <th scope="col" style="width: 40px; text-align: center;">birthday</th>
+                <th scope="col" style="width: 40px; text-align: center;">anniversary</th>
+                <th scope="col" style="width: 40px; text-align: center;">creation time</th>
+              </tr>
+            </thead>
+            <tbody id="displayModal4TableBody">
+              
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <label for="sortByIndividual4" class="col-form-label">Sort By:</label>
+          <button id="sortByIndividual4" type="button" class="btn btn-primary">Name</button>
+          <button id="sortByFile4" type="button" class="btn btn-primary">File Name</button>
+          <button id="sortByCreation" type="button" class="btn btn-primary">Creation Date</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Display Queries Modal 5-->
+  <div class="modal fade modal-dialog modal-xl" id="displayModal5" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Execute Query 5</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="displayModalContent5" class="modal-body">
+          <table id="displayModal5Table" class="table table-bordered" style="table-layout: fixed;">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col" style="width: 50px; text-align: center;">File name</th>
+                <th scope="col" style="width: 20px; text-align: center;">name</th>
+                <th scope="col" style="width: 40px; text-align: center;">downloads</th>
+                <th scope="col" style="width: 40px; text-align: center;">descr</th>
+                <th scope="col" style="width: 40px; text-align: center;">dates</th>
+              </tr>
+            </thead>
+            <tbody id="displayModal5TableBody">
+              
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <label for="sortByCount" class="col-form-label">Sort By:</label>
+          <button id="sortByCount" type="button" class="btn btn-primary">Count</button>
+          <button id="sortByFile5" type="button" class="btn btn-primary">File Name</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="jumbotron jumbotron-fluid">
+    <div class="container">
+      <h1 class="display-4" style="text-align: center;">vCard Viewer</h1>
+    </div>
+  </div>
+
+  <h1 style="text-align: center" id="fileLog">File Log Panel</h1>
+  <div id="first">
+    <div id="filelogDiv" class="table-wrapper-scroll-y my-custom-scrollbar">
+      <table id="filelogTable" class="table table-bordered" style="table-layout: fixed;">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col" style="width: 50px; text-align: center;">File name <br> (click to download)</th>
+            <th scope="col" style="width: 80px; text-align: center;">Individual's name</th>
+            <th scope="col" style="width: 40px; text-align: center;">Additional properties</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody1">
+
+        </tbody>
+      </table>
+    </div>
+    <div class="form-group">
+      <label for="upload_filename">Click to upload a file</label>
+      <input type="file" class="form-control-file" id="upload_filename" name="uploadFile" disabled>
+    </div>
+    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
+    <button id="upload_button" type="button" class="btn btn-primary" disabled>Upload</button>
+
+  </div>
+
+  <h1 style="text-align: center" id="cardView">Card View Panel</h1>
+  <div id="second">
+
+    <div class="table-wrapper-scroll-y my-custom-scrollbar2">
+      <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          Select File
+        </button>
+        <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuButton" id="dropdown">
+
+        </div>
+      </div>
+      <div>
+        <h3 id="viewPanelFileName" style="text-align: center;"> </h3>
+      </div>
+      <div id="cardviewDiv">
+        <table id="cardviewTable" class="table table-bordered" style="table-layout: auto;">
+          <thead class="bg-success">
+            <tr>
+              <th scope="col" style=" text-align: center;">Property #</th>
+              <th scope="col" style=" text-align: center;">Name</th>
+              <th scope="col" style="width: 100%; text-align: center;">Values</th>
+              <th scope="col" style="text-align: center;">Parameters</th>
+            </tr>
+          </thead>
+          <tbody id="propBody">
+
+          </tbody>
+        </table>
+
+        <div id="addProperty">
+          <div class="form-row align-items-center">
+            <div class="col-auto my-1">
+              <label class="mr-sm-2" for="inlineFormCustomSelect">Select Property name</label>
+              <select class="custom-select mr-sm-2" id="addPropertySelect" disabled required>
+              </select>
+            </div>
+          </div>
+          <div class="form-row align-items-center">
+            <div class="col-auto my-1">
+              <label class="sr-only" for="inlineFormInput">Name</label>
+              <input type="text" class="form-control mb-2" id="propGroup" placeholder="Property group" disabled>
+            </div>
+            <div class="col-auto my-1">
+              <label class="sr-only" for="inlineFormInput">Name</label>
+              <input type="text" class="form-control mb-2" id="propValue" placeholder="Property value" disabled
+                required>
+            </div>
+            <div class="col-auto my-1">
+              <button id="propSubmit" type="submit" class="btn btn-primary" disabled>Submit</button>
             </div>
           </div>
         </div>
       </div>
-
-
-    <div class="jumbotron jumbotron-fluid">
-        <div class="container">
-            <h1 class="display-4" style="text-align: center;">vCard Viewer</h1>
-        </div>
     </div>
-    <h1 style="text-align: center" id="fileLog" >File Log Panel</h1>
-    <div id="first">
-        <div id="filelogDiv" class="table-wrapper-scroll-y my-custom-scrollbar">
-            <table id="filelogTable" class="table table-bordered" style="table-layout: fixed;">
-                <thead class="table-dark">
-                    <tr>
-                        <th scope="col" style="width: 50px; text-align: center;">File name <br> (click to download)</th>
-                        <th scope="col" style="width: 80px; text-align: center;">Individual's name</th>
-                        <th scope="col" style="width: 40px; text-align: center;">Additional properties</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody1">
+  </div>
 
-                </tbody>
-            </table>
-        </div>
-        <div class="form-group">
-            <label for="upload_filename">Click to upload a file</label>
-            <input type="file" class="form-control-file" id="upload_filename" name="uploadFile">
-        </div>
-        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
-        <button id="upload_button" type="button" class="btn btn-primary">Upload</button>
-
-    </div>
-
-    <h1 style="text-align: center" id="cardView">Card View Panel</h1>
-    <div id="second">
-
-        <div class="table-wrapper-scroll-y my-custom-scrollbar2">
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
-                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Select File
-                </button>
-                <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuButton" id="dropdown">
-
-                </div>
-            </div>
-            <div> <h3 id="viewPanelFileName" style="text-align: center;"> </h3></div>
-            <div id="cardviewDiv">
-                <table id="cardviewTable" class="table table-bordered" style="table-layout: auto;">
-                    <thead class="bg-success">
-                        <tr>
-                            <th scope="col" style=" text-align: center;">Property #</th>
-                            <th scope="col" style=" text-align: center;">Name</th>
-                            <th scope="col" style="width: 100%; text-align: center;">Values</th>
-                            <th scope="col" style="text-align: center;">Parameters</th>
-                        </tr>
-                    </thead>
-                    <tbody id="propBody">
-
-                    </tbody>
-                </table>
-
-                <div id="addProperty" >
-                    <div class="form-row align-items-center">
-                      <div class="col-auto my-1">
-                        <label class="mr-sm-2" for="inlineFormCustomSelect">Select Property name</label>
-                        <select class="custom-select mr-sm-2" id="addPropertySelect" disabled required>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="form-row align-items-center">
-                        <div class="col-auto my-1">
-                            <label class="sr-only" for="inlineFormInput">Name</label>
-                            <input type="text" class="form-control mb-2" id="propGroup" placeholder="Property group" disabled>
-                          </div>
-                        <div class="col-auto my-1">
-                          <label class="sr-only" for="inlineFormInput">Name</label>
-                          <input type="text" class="form-control mb-2" id="propValue" placeholder="Property value" disabled required>
-                        </div>
-                        <div class="col-auto my-1">
-                          <button id="propSubmit" type="submit" class="btn btn-primary" disabled>Submit</button>
-                        </div>
-                      </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <h1 style="text-align: center" id="createCard">Create Custom vCard</h1>
-    <div id="createCardForm">
-        <div class="form-row">
-          <div class="col-md-6 mb-3">
-            <label for="validationDefaultUsername">Filename</label>
-            <div class="input-group">
-              <input type="text" class="form-control" id="validationFileName" placeholder="Filename" aria-describedby="inputGroupPrepend2" required>
-              <div class="input-group-prepend">
-                <span class="input-group-text" id="inputGroupPrepend2">.vcf</span>
-              </div>
-            </div>
+  <h1 style="text-align: center" id="createCard">Create Custom vCard</h1>
+  <div id="createCardForm">
+    <div class="form-row">
+      <div class="col-md-6 mb-3">
+        <label for="validationDefaultUsername">Filename</label>
+        <div class="input-group">
+          <input type="text" class="form-control" id="validationFileName" placeholder="Filename"
+            aria-describedby="inputGroupPrepend2" required>
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroupPrepend2">.vcf</span>
           </div>
         </div>
-        <div class="form-row">
-          <div class="col-md-6 mb-3">
-            <label for="validationDefault03">FullName</label>
-            <input type="text" class="form-control" id="fnValue" placeholder="full name" required>
-          </div>
-        </div>
-        <button id="createCustomCard" class="btn btn-primary" type="submit">Submit form</button>
+      </div>
     </div>
-    <script src="/index.js"></script>
+    <div class="form-row">
+      <div class="col-md-6 mb-3">
+        <label for="validationDefault03">FullName</label>
+        <input type="text" class="form-control" id="fnValue" placeholder="full name" required>
+      </div>
+    </div>
+    <button id="createCustomCard" class="btn btn-primary" type="submit" disabled>Submit form</button>
+  </div>
+  <script src="/index.js"></script>
 </body>
 
 </html>
