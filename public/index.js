@@ -153,20 +153,20 @@ $("#clearData").click(function () {
   });
 });
 
-$('#displayDBStatusButton').click(function(){
+$("#displayDBStatusButton").click(function () {
   $.ajax({
     type: "get",
     datatype: "json",
     url: "/displayDB",
     success: function (stat) {
-      if (stat === true) {
-        alert("Successfully cleared all data");
+      if (stat) {
+        alert(stat);
       } else {
         alert("Sorry, an error occurred");
       }
     },
   });
-})
+});
 
 $("#sortByIndividual").click(function () {
   $("#executeClose").trigger("click");
@@ -362,13 +362,13 @@ $("#sortByCreation").click(function () {
 
 $("#storeFiles").click(storeFileFunction);
 
-function enableAll(){
-  $('#createCustomCard')[0].disabled = false;
-  $('#upload_button')[0].disabled = false;
-  $('#upload_filename')[0].disabled = false;
-  $('#executeQuery')[0].disabled = false;
-  $('#displayDBStatusButton')[0].disabled = false;
-  $('#clearData')[0].disabled = false;
+function enableAll() {
+  $("#createCustomCard")[0].disabled = false;
+  $("#upload_button")[0].disabled = false;
+  $("#upload_filename")[0].disabled = false;
+  $("#executeQuery")[0].disabled = false;
+  $("#displayDBStatusButton")[0].disabled = false;
+  $("#clearData")[0].disabled = false;
 }
 
 function fileLogPanel() {
@@ -556,9 +556,7 @@ function funct(filename) {
         annRow += "<td>" + (propNames.length + len) + "</td>";
         annRow += "<td> ANN </td>";
         annRow +=
-          '<td onwheel="changeAnn()" onclick="changeAnn2()">' +
-          value +
-          "</td>";
+          '<td onwheel="changeAnn()" onclick="changeAnn2()">' + value + "</td>";
         annRow += "<td> 0 </td>";
 
         annRow += "<tr>";
@@ -614,6 +612,28 @@ function funct(filename) {
 }
 
 function change(filename, index, size) {
+  if (index === 0) {
+    let value = prompt("Please enter a new FN value");
+
+    if (value !== "" && value !== null) {
+      $.ajax({
+        type: "get",
+        datatype: "json",
+        url: "/changeFNValues",
+        data: { filename: filename, value: value},
+        success: function (data) {
+          if (data.act === 0) {
+            alert("Successfully changed Value");
+            updateDB(filename);
+            location.reload();
+          } else {
+            alert("Sorry! You've entered an invalid value");
+          }
+        },
+      });
+    }
+  }
+
   if (size === 1 && index > 0) {
     let value = prompt("Please enter a new value");
 

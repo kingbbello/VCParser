@@ -25,6 +25,7 @@ let sharedLib = ffi.Library("./libvcparser.so", {
   getAnn: ["string", ["string"]],
   getParamValues: ["string", ["string"]],
   createNewCard: ["int", ["string", "string", "int"]],
+  changeFN: ["int", ["string", "string"]],
   uploadCard: ["int", ["string", "string"]],
   addPropToCard: ["int", ["string", "string", "string", "string"]],
   changeDate: ["int", ["string", "string", "string"]],
@@ -193,6 +194,18 @@ app.get("/changeValues", function (req, res) {
   });
 });
 
+app.get("/changeFNValues", function (req, res) {
+  let stat = sharedLib.changeFN(
+    "uploads/" + req.query.filename,
+    req.query.value
+  );
+
+  console.log(stat)
+  res.send({
+    act: stat,
+  });
+});
+
 app.get("/exist", function (req, res) {
   let filename = req.query.name;
 
@@ -283,10 +296,6 @@ app.get("/login", async function (req, res) {
   let username = req.query.data;
   let password = req.query.pass;
   let database = req.query.data;
-
-  // let username = 'mbello';
-  // let password = '0998244';
-  // let database = 'mbello';
 
   // console.log(username + " " + password + " " + database);
 
@@ -447,6 +456,24 @@ app.get("/clear", async function (req, res) {
   }
 });
 
+app.get("/displayDB", async function (req, res) {
+  try {
+    let downloadCount = await connection.execute(
+      "select COUNT(*) as count from DOWNLOAD;"
+    );
+    let fileCount = await connection.execute(
+      "select COUNT(*) as count from FILE;"
+    );
+
+    res.send(
+      `Database has ${fileCount[0][0].count} files and ${downloadCount[0][0].count} downloads`
+    );
+  } catch (e) {
+    console.log("Query error: " + e);
+    res.send(false);
+  }
+});
+
 app.get("/trackDownload", async function (req, res) {
   try {
     let date = new Date();
@@ -573,7 +600,7 @@ app.get("/execute5", async function (req, res) {
   try {
     let order = req.query.sort;
     let limit = isNaN(req.query.count) ? 0 : Number(req.query.count);
-    if(limit === 0){
+    if (limit === 0) {
       res.send("No query found");
       return;
     }
@@ -587,8 +614,8 @@ app.get("/execute5", async function (req, res) {
       `SELECT file_Name, name, count(file_Name) as count, d_descr, MAX(download_time) as max FROM (SELECT * FROM TEST) AS SUB GROUP BY file_Name ORDER BY ${order}`
     );
     let string = "";
-    
-    if(rows.length === 0){
+
+    if (rows.length === 0) {
       res.send("<tr><td>No query found</td></tr>");
       return;
     }
@@ -602,7 +629,6 @@ app.get("/execute5", async function (req, res) {
       string += `<td>${row.max}</td> `;
       string += "</tr>";
     }
-    
   } catch (e) {
     console.log("Query error: " + e);
     res.send(false);
@@ -612,13 +638,13 @@ app.get("/execute5", async function (req, res) {
 app.get("/execute4", async function (req, res) {
   try {
     let order = req.query.sort;
-    console.log('here');
+    console.log("here");
     let [rows] = await connection.execute(
       `SELECT file_Name, num_props, name, birthday, anniversary, creation_time from FILE WHERE creation_time BETWEEN '${req.query.start}' AND '${req.query.end}' ORDER BY '${order}'`
     );
     let string = "";
-    
-    if(rows.length === 0){
+
+    if (rows.length === 0) {
       res.send("<tr><td>No query found</td></tr>");
       return;
     }
@@ -632,7 +658,7 @@ app.get("/execute4", async function (req, res) {
       string += `<td>${row.creation_time}</td> `;
       string += "</tr>";
     }
-    
+
     res.send(string);
   } catch (e) {
     console.log("Query error: " + e);

@@ -1922,7 +1922,7 @@ VCardErrorCode createNewCard(char *filename, char *value, int indexToDelete)
     }
 
     Property *property = prop->data;
-    property->values = initializeList(valueToString, deleteValue, compareValues);
+    property->values = initializeList(&valueToString, &deleteValue, &compareValues);
     char *string = malloc(strlen(value));
 
     strcpy(string, value);
@@ -1992,12 +1992,15 @@ VCardErrorCode changeDate(char *filename, char *dateString, char *type)
         return code;
     }
 
-    if(strcmp(type, "bday") == 0){
+    if (strcmp(type, "bday") == 0)
+    {
         DateTime *bday = JSONtoDT(dateString);
 
         card->birthday = NULL;
         card->birthday = bday;
-    }else{
+    }
+    else
+    {
         DateTime *ann = JSONtoDT(dateString);
 
         card->anniversary = NULL;
@@ -2018,13 +2021,49 @@ VCardErrorCode changeDate(char *filename, char *dateString, char *type)
     return OK;
 }
 
+VCardErrorCode changeFN(char *filename, char *value)
+{
+    Card *card = NULL;
+    VCardErrorCode code = OK;
+    code = createCard(filename, &card);
+
+    if (code != OK)
+    {
+        return code;
+    }
+    
+    Property *property = card->fn;
+    property->values = NULL;
+    property->values = initializeList(&valueToString, &deleteValue, &compareValues);
+    char *string = malloc(strlen(value));
+
+    strcpy(string, value);
+    insertBack(property->values, string);
+
+    // code = validateCard(card);
+    if (code != OK)
+    {
+        printf("2");
+        return code;
+    }
+
+    code = writeCard(filename, card);
+    if (code != OK)
+    {
+        printf("3");
+        return code;
+    }
+
+    return OK;
+}
 int main()
 {
     // printf("%s \n",errorToString(INV_CARD));
     Card *theCard = NULL;
-    int c = createCard("uploads/testCardGroup.vcf", &theCard);
+    int c = createCard("../uploads/testCard.vcf", &theCard);
     printf("%d \n", c);
-    changeDate("uploads/testCard-BdayText.vcf", "{\"isText\":false,\"date\":\"19541223\",\"time\":\"234556\",\"text\":\"\",\"isUTC\":true}", "bday");
+    // changeDate("uploads/testCard-BdayText.vcf", "{\"isText\":false,\"date\":\"19541223\",\"time\":\"234556\",\"text\":\"\",\"isUTC\":true}", "bday");
+    changeFN("../uploads/bello.vcf", "king");
     // printf("%s \n", getParamValues("uploads/testCard.vcf"));
 
     // createNewCard("uploads/testCard.vcf", "M", 2);
