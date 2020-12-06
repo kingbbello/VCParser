@@ -263,6 +263,26 @@ $("#sortByIndividual3").click(function () {
   });
 });
 
+$("#sortByAnniversary").click(function () {
+  $("#executeClose").trigger("click");
+  $.ajax({
+    type: "get",
+    datatype: "json",
+    url: "/execute3",
+    data: { sort: "ann" },
+    success: function (data) {
+      if (!data) {
+        alert("Sorry! Something went wrong");
+      } else {
+        if ($("#displayModal3TableBody").length > 0) {
+          $("#displayModal3TableBody").children().empty();
+        }
+        $("#displayModal3TableBody").append(`${data}`);
+      }
+    },
+  });
+});
+
 $("#sortByCount").click(function () {
   $("#executeClose").trigger("click");
   $.ajax({
@@ -358,7 +378,7 @@ $("#sortByCreation").click(function () {
     datatype: "json",
     url: "/execute4",
     data: {
-      sort: "creation_Date",
+      sort: "creation_time",
       start: $("#startDateTime")[0].value,
       end: $("#endDateTime")[0].value,
     },

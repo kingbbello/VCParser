@@ -308,8 +308,8 @@ app.get("/login", async function (req, res) {
       database: database,
     });
 
-    let fileTable = `CREATE TABLE IF NOT EXISTS FILE (id INT AUTO_INCREMENT PRIMARY KEY, file_Name VARCHAR(60) NOT NULL, num_props INT NOT NULL, name VARCHAR(256) NOT NULL,birthday DATETIME,anniversary DATETIME,creation_time DATETIME NOT NULL);`;
-    let downloadTable = `CREATE TABLE IF NOT EXISTS DOWNLOAD (download_id INT AUTO_INCREMENT PRIMARY KEY, d_descr VARCHAR(256), id INT NOT NULL, download_time DATETIME NOT NULL, FOREIGN KEY(id) REFERENCES FILE(id) ON DELETE CASCADE);`;
+    let fileTable = `CREATE TABLE IF NOT EXISTS FILE (file_id INT AUTO_INCREMENT PRIMARY KEY, file_Name VARCHAR(60) NOT NULL, num_props INT NOT NULL, name VARCHAR(256) NOT NULL,birthday DATETIME,anniversary DATETIME,creation_time DATETIME NOT NULL);`;
+    let downloadTable = `CREATE TABLE IF NOT EXISTS DOWNLOAD (download_id INT AUTO_INCREMENT PRIMARY KEY, d_descr VARCHAR(256), file_id INT NOT NULL, download_time DATETIME NOT NULL, FOREIGN KEY(file_id) REFERENCES FILE(file_id) ON DELETE CASCADE);`;
 
     await connection.execute(fileTable);
     await connection.execute(downloadTable);
@@ -497,11 +497,11 @@ app.get("/trackDownload", async function (req, res) {
     d_descr += 'bytes'
 
     let [row] = await connection.execute(
-      `SELECT id  FROM FILE WHERE file_Name = '${filename}';`
+      `SELECT file_id  FROM FILE WHERE file_Name = '${filename}';`
     );
 
     if (row.length > 0) {
-      let id = row[0].id;
+      let id = row[0].file_id;
       await connection.execute(
         `INSERT INTO DOWNLOAD VALUES('NULL', '${d_descr}', ${id}, ${Number(
           dateString
@@ -527,6 +527,11 @@ app.get("/execute1", async function (req, res) {
     );
     let string = "";
 
+    if (rows.length === 0) {
+      res.send("<tr><td>No query found</td></tr>");
+      return;
+    }
+
     for (let row of rows) {
       string += "<tr>";
       string += `<td>${row.file_Name}</td> `;
@@ -551,6 +556,11 @@ app.get("/execute2", async function (req, res) {
     );
     let string = "";
 
+    if (rows.length === 0) {
+      res.send("<tr><td>No query found</td></tr>");
+      return;
+    }
+
     for (let row of rows) {
       string += "<tr>";
       string += `<td>${row.name}</td> `;
@@ -571,6 +581,12 @@ app.get("/execute3", async function (req, res) {
     let [rows] = await connection.execute(
       `SELECT name, anniversary from FILE WHERE anniversary IN (SELECT anniversary from FILE GROUP BY anniversary HAVING COUNT(*) > 1) ORDER BY ${order}`
     );
+
+    if (rows.length === 0) {
+      res.send("<tr><td>No query found</td></tr>");
+      return;
+    }
+
     for (let row of rows) {
       string += "<tr>";
       string += `<td>${row.name}</td> `;
@@ -590,20 +606,20 @@ app.get("/execute5", async function (req, res) {
     let order = req.query.sort;
     let limit = isNaN(req.query.count) ? 0 : Number(req.query.count);
     if (limit === 0) {
-      res.send("No query found");
+      res.send("<tr><td>No query found</td></tr>");
       return;
     }
 
     await connection.execute(`DROP TABLE IF EXISTS TEST`);
     await connection.execute(
-      `CREATE TABLE TEST AS SELECT file_Name, name, d_descr, download_time FROM (DOWNLOAD INNER JOIN FILE ON DOWNLOAD.id=FILE.id) order by download_id desc limit ${limit}`
+      `CREATE TABLE TEST AS SELECT file_Name, name, d_descr, download_time FROM (DOWNLOAD INNER JOIN FILE ON DOWNLOAD.file_id=FILE.file_id) order by download_id desc limit ${limit}`
     );
 
     let [rows] = await connection.execute(
       `SELECT file_Name, name, count(file_Name) as count, d_descr, MAX(download_time) as max FROM (SELECT * FROM TEST) AS SUB GROUP BY file_Name ORDER BY ${order}`
     );
     let string = "";
-
+    
     if (rows.length === 0) {
       res.send("<tr><td>No query found</td></tr>");
       return;
@@ -618,6 +634,8 @@ app.get("/execute5", async function (req, res) {
       string += `<td>${row.max}</td> `;
       string += "</tr>";
     }
+    res.send(string)
+
   } catch (e) {
     console.log("Query error: " + e);
     res.send(false);
@@ -627,9 +645,9 @@ app.get("/execute5", async function (req, res) {
 app.get("/execute4", async function (req, res) {
   try {
     let order = req.query.sort;
-    console.log("here");
+    
     let [rows] = await connection.execute(
-      `SELECT file_Name, num_props, name, birthday, anniversary, creation_time from FILE WHERE creation_time BETWEEN '${req.query.start}' AND '${req.query.end}' ORDER BY '${order}'`
+      `SELECT file_Name, num_props, name, birthday, anniversary, creation_time from FILE WHERE creation_time BETWEEN '${req.query.start}' AND '${req.query.end}' ORDER BY ${order}`
     );
     let string = "";
 
