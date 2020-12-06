@@ -36,17 +36,18 @@
     <br>
     <br>
     <br>
-    <button class="btn btn-outline-primary" type="button" name="clearData" id="clearData" disabled>Clear All Data</button>
+    <button class="btn btn-outline-primary" type="button" name="clearData" id="clearData">Clear All Data</button>
     <br>
     <br>
     <br>
-    <button class="btn btn-outline-primary" type="button" name="displayDBStatus" id="displayDBStatusButton" disabled>Display
+    <button class="btn btn-outline-primary" type="button" name="displayDBStatus" id="displayDBStatusButton">Display
       DB</button>
     <br>
     <br>
     <br>
     <button data-toggle="modal" data-target="#executeQueryModal" class="btn btn-outline-primary" type="button"
-      name="executeQuery" id="executeQuery" disabled>Execute Query</button>
+      name="executeQuery" id="executeQuery">Execute Query</button>
+    <p id="loginStatus">Hello</p>
   </section>
 
   <!-- Modal -->
@@ -326,6 +327,20 @@
     </div>
   </div>
 
+  <!-- <div class="card text-center">
+    <div class="card-header">
+      Status Panel
+    </div>
+    <div class="card-body">
+      <p id="card" class="card-text"></p>
+      <a href="#" class="btn btn-primary">clear</a>
+    </div>
+    <div class="card-footer text-muted">
+      <p id="card-loginStatus">Logged out</p>
+    </div>
+  </div> -->
+
+
   <h1 style="text-align: center" id="fileLog">File Log Panel</h1>
   <div id="first">
     <div id="filelogDiv" class="table-wrapper-scroll-y my-custom-scrollbar">
@@ -344,10 +359,10 @@
     </div>
     <div class="form-group">
       <label for="upload_filename">Click to upload a file</label>
-      <input type="file" class="form-control-file" id="upload_filename" name="uploadFile" disabled>
+      <input type="file" class="form-control-file" id="upload_filename" name="uploadFile">
     </div>
     <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
-    <button id="upload_button" type="button" class="btn btn-primary" disabled>Upload</button>
+    <button id="upload_button" type="button" class="btn btn-primary">Upload</button>
 
   </div>
 
@@ -429,7 +444,7 @@
         <input type="text" class="form-control" id="fnValue" placeholder="full name" required>
       </div>
     </div>
-    <button id="createCustomCard" class="btn btn-primary" type="submit" disabled>Submit form</button>
+    <button id="createCustomCard" class="btn btn-primary" type="submit">Submit form</button>
   </div>
   <script src="/index.js"></script>
 </body>

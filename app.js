@@ -10,6 +10,7 @@ const path = require("path");
 const fileUpload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const mysql = require("mysql2/promise");
+let login = false;
 
 let connection;
 
@@ -200,7 +201,6 @@ app.get("/changeFNValues", function (req, res) {
     req.query.value
   );
 
-  console.log(stat)
   res.send({
     act: stat,
   });
@@ -296,6 +296,7 @@ app.get("/login", async function (req, res) {
   let username = req.query.data;
   let password = req.query.pass;
   let database = req.query.data;
+  login = true;
 
   // console.log(username + " " + password + " " + database);
 
@@ -319,6 +320,10 @@ app.get("/login", async function (req, res) {
     res.send(false);
   }
 });
+
+app.get('/checklogin', function(req, res){
+  res.send(login)
+})
 
 app.get("/storeFiles", async function (req, res) {
   try {
@@ -486,6 +491,11 @@ app.get("/trackDownload", async function (req, res) {
     let dateString = "" + year + month + day + hour + min + secs;
 
     let filename = req.query.filename;
+    let descr = fs.statSync('uploads/' + filename).size;
+    let d_descr = descr.toString();
+    d_descr = d_descr.slice(0,3)
+    d_descr += 'bytes'
+
     let [row] = await connection.execute(
       `SELECT id  FROM FILE WHERE file_Name = '${filename}';`
     );
@@ -493,7 +503,7 @@ app.get("/trackDownload", async function (req, res) {
     if (row.length > 0) {
       let id = row[0].id;
       await connection.execute(
-        `INSERT INTO DOWNLOAD VALUES('NULL', 'NULL', ${id}, ${Number(
+        `INSERT INTO DOWNLOAD VALUES('NULL', '${d_descr}', ${id}, ${Number(
           dateString
         )})`
       );
@@ -557,27 +567,6 @@ app.get("/execute2", async function (req, res) {
 app.get("/execute3", async function (req, res) {
   try {
     let order = req.query.sort === "individual" ? "name" : "anniversary";
-
-    // let [firstrows] = await connection.execute(
-    //   `SELECT id, name, anniversary, COUNT(anniversary) from FILE GROUP BY anniversary HAVING (COUNT(anniversary) > 1)`
-    // );
-
-    // console.log(firstrows);
-    // let array = [];
-    // for (let crow of firstrows) {
-    //   array.push(crow.id);
-    // }
-
-    // let where = "";
-    // for (let i = 0; i < array.length; i++) {
-    //   if (i === 0) {
-    //     where += `WHERE anniversary='${array[i]}' `;
-    //   } else {
-    //     where += `OR anniversary='${array[i]}'`;
-    //   }
-    // }
-
-    // console.log(where)
     let string = "";
     let [rows] = await connection.execute(
       `SELECT name, anniversary from FILE WHERE anniversary IN (SELECT anniversary from FILE GROUP BY anniversary HAVING COUNT(*) > 1) ORDER BY ${order}`

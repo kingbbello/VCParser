@@ -1,5 +1,20 @@
 // Put all onload AJAX calls here, and event listeners
 $(document).ready(function () {
+  $.ajax({
+    type: 'get',
+    datatype: 'json',
+    url: 'checklogin',
+    success: function(status){
+      if(status){
+        enableAll(false);
+        fileLogPanel();
+      }else{
+        console.log('here')
+        enableAll(true);
+      }
+    }
+  })
+
   $("#fileLog").click(function () {
     $("#first").slideToggle("slow");
   });
@@ -362,13 +377,13 @@ $("#sortByCreation").click(function () {
 
 $("#storeFiles").click(storeFileFunction);
 
-function enableAll() {
-  $("#createCustomCard")[0].disabled = false;
-  $("#upload_button")[0].disabled = false;
-  $("#upload_filename")[0].disabled = false;
-  $("#executeQuery")[0].disabled = false;
-  $("#displayDBStatusButton")[0].disabled = false;
-  $("#clearData")[0].disabled = false;
+function enableAll(state) {
+  $("#createCustomCard")[0].disabled = state;
+  $("#upload_button")[0].disabled = state;
+  $("#upload_filename")[0].disabled = state;
+  $("#executeQuery")[0].disabled = state;
+  $("#displayDBStatusButton")[0].disabled = state;
+  $("#clearData")[0].disabled = state;
 }
 
 function fileLogPanel() {
