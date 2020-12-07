@@ -373,8 +373,8 @@ app.get("/storeFiles", async function (req, res) {
             ? ""
             : `${JSON.parse(ann[i]).date}${JSON.parse(ann[i]).time}`;
 
-        bdayText = isNaN(Number(bdayText)) ? "NULL" : Number(bdayText);
-        annText = isNaN(Number(annText)) ? "NULL" : Number(annText);
+        bdayText = isNaN(Number(bdayText)) || bdayText.length === 0 ? "NULL" : Number(bdayText);
+        annText = isNaN(Number(annText)) || annText.length === 0 ? "NULL" : Number(annText);
         if (!fileNameRow.includes(array[i])) {
           // console.log(`INSERT INTO FILE VALUES (NULL, '${array[i]}', ${lengths[i]}, ${names[i]}, ${bdayText}, ${annText}, ${Number(dateString)})`)
 
@@ -494,7 +494,7 @@ app.get("/trackDownload", async function (req, res) {
     let descr = fs.statSync('uploads/' + filename).size;
     let d_descr = descr.toString();
     d_descr = d_descr.slice(0,3)
-    d_descr += 'bytes'
+    d_descr += ' bytes'
 
     let [row] = await connection.execute(
       `SELECT file_id  FROM FILE WHERE file_Name = '${filename}';`
