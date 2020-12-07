@@ -9,7 +9,7 @@ BIN = bin/
 PARSER_SRC_FILES = $(wildcard src/VC*.c)
 PARSER_OBJ_FILES = $(patsubst src/VC%.c,bin/VC%.o,$(PARSER_SRC_FILES))
 
-parser: $(BIN)libvcparser.so VCParser
+parser: $(BIN)libvcparser.so 
 
 VCParser: $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o VCParser $(PARSER_OBJ_FILES) $(BIN)LinkedListAPI.o
