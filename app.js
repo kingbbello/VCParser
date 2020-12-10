@@ -627,6 +627,7 @@ app.get("/execute5", async function (req, res) {
     let [rows] = await connection.execute(
       `SELECT * FROM TEST2 WHERE count >= ${min} ORDER BY ${order}`
     );
+    
     let string = "";
     
     if (rows.length === 0) {
