@@ -612,12 +612,21 @@ app.get("/execute5", async function (req, res) {
 
     await connection.execute(`DROP TABLE IF EXISTS TEST`);
     await connection.execute(
-      `CREATE TABLE TEST AS SELECT file_Name, name, d_descr, download_time FROM (DOWNLOAD INNER JOIN FILE ON DOWNLOAD.file_id=FILE.file_id) order by download_id desc limit ${limit}`
+      `CREATE TABLE TEST AS SELECT file_Name, name, d_descr, download_time FROM (DOWNLOAD INNER JOIN FILE ON DOWNLOAD.file_id=FILE.file_id)`
     );
 
-    let [rows] = await connection.execute(
-      `SELECT file_Name, name, count(file_Name) as count, d_descr, MAX(download_time) as max FROM (SELECT * FROM TEST) AS SUB GROUP BY file_Name ORDER BY ${order}`
+    await connection.execute(`DROP TABLE IF EXISTS TEST2`);
+    await connection.execute(
+      `CREATE TABLE TEST2 AS SELECT file_Name, name, count(file_Name) as count, d_descr, MAX(download_time) as max FROM (SELECT * FROM TEST) AS SUB GROUP BY file_Name ORDER BY COUNT desc`
     );
+
+    let [countArray] = await connection.execute(`SELECT DISTINCT count from TEST2`)
+    let min = limit > countArray.length ? countArray[countArray.length - 1].count : countArray[limit - 1].count;
+
+    let [rows] = await connection.execute(
+      `SELECT * FROM TEST2 WHERE count >= ${min} ORDER BY ${order}`
+    );
+    
     let string = "";
     
     if (rows.length === 0) {
